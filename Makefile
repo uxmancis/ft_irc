@@ -6,7 +6,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 CXX = c++
 
-CXXFLAGS = -Wall -Werror -Wextra -std=c++98
+CXXFLAGS = #Wall -Werror -Wextra -std=c++98
 
 CLR_RMV		:= \033[0m
 RED		    := \033[1;31m
