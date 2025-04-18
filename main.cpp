@@ -38,7 +38,7 @@ int main() {
     server_addr.sin_port   = htons(PORT);        // Puerto en orden de red
 
     // -> EN VEZ DE inet_pton, usamos inet_addr:
-    server_addr.sin_addr.s_addr = inet_addr("10.14.8.6");
+    server_addr.sin_addr.s_addr = inet_addr("10.14.6.6");
     if (server_addr.sin_addr.s_addr == INADDR_NONE) 
     {
         std::cerr << "inet_addr: IP inválida\n";
