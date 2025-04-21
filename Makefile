@@ -1,41 +1,45 @@
-NAME = ft_irc
+NAME	=	ircserv
 
-SRCS = main.cpp
+CC		=	g++
+FLAGS	=	-Wall -Wextra -Werror -std=c++98
 
-OBJS = $(SRCS:.cpp=.o)
+SRC		=	main.cpp	\
+ 
+OBJS	=	$(SRC:.cpp=.o)
 
-CXX = c++
-
-CXXFLAGS = #Wall -Werror -Wextra -std=c++98
-
-CLR_RMV		:= \033[0m
-RED		    := \033[1;31m
-GREEN		:= \033[1;32m
-YELLOW		:= \033[1;33m
-BLUE		:= \033[1;34m
-CYAN 		:= \033[1;36m
-
-
-define	ART
-$(RED)                                                        
-
-HOLI CHICOS
-
- $(CLR_RMV)
-endef
-export	ART
+YELLOW	=	\033[1;33m
+CYAN	=	\033[1;36m
+GREEN	=	\033[1;32m
+RESET	=	\033[0m
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	@$(CXX) $(CXXFLAGS) -o $(NAME) $(OBJS)
-	@echo "$$ART"
+$(NAME) : $(OBJS)
+	@$(CC) $(FLAGS) $(OBJS) -o $(NAME)
+	@echo "$(GREEN)Program $(NAME) compiled successfully!$(RESET)"
+	@echo "$(CYAN)												 "
+	@echo "   ___  _____    _____   __    ___ 					 "
+	@echo "  / __\/__   \   \_   \ /__\  / __\					 "
+	@echo " / _\    / /\/    / /\// \// / /   					 "
+	@echo "/ /     / /    /\/ /_ / _  \/ /___ 					 "
+	@echo "\/      \/_____\____/ \/ \_/\____/ 					 "
+	@echo "         |_____|                   					 "
+	@echo "														 "
+	@echo "by ngastana && emunoz && uxmancis					 "
+	@echo "	$(RESET)											 "
+                                                    
+                                                    
+%.o: %.cpp
+	@echo "$(YELLOW)Compiling $<$(RESET)"
+	@$(CC) $(FLAGS) -c $< -o $@
 
 clean:
 	@rm -f $(OBJS)
+	@echo "$(CYAN)Object files removed.$(RESET)"
 
 fclean: clean
 	@rm -f $(NAME)
+	@echo "$(CYAN)Program $(NAME) removed.$(RESET)"
 
 re: fclean all
 
