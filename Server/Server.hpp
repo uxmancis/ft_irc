@@ -3,32 +3,25 @@
 # define SERVER_HPP
 
 #include <iostream>
-#include <cstring>
-#include <cstdlib>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#include <fcntl.h>
+#include <cstring>
+#include <cstdlib>
 
-#define ADDRESS = "0.0.0.0";
-class Server {
+#include "../PollManager/PollManager.hpp"
+
+class Server 
+{
     public:
         Server(int port, const std::string& password);
         ~Server(void);
     
-        bool                setup(void);
-        int                 getSocket(void) const;
-        const std::string&  getIP(void) const;
-        const std::string&  getPassword(void) const;
-    
     private:
-        int         _port;
-        int         _serverFd;
-        std::string _ip;
+        int         _serverFD;
         std::string _password;
-    
-        std::string _getLocalIP();
+        PollManager _pollManager;
+
     };
 
 #endif

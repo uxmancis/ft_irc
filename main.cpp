@@ -12,9 +12,5 @@ int main(int argc, char** argv)
     std::string password = argv[2];
 
     Server server(port, password);
-    if (!server.setup()) {
-        std::cerr << "Error iniciando el servidor.\n";
-        return 1;
-    }
-    return 0;
+    return (0);
 }

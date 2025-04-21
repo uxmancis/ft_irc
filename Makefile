@@ -3,8 +3,9 @@ NAME	=	ircserv
 CC		=	g++
 FLAGS	=	-Wall -Wextra -Werror -std=c++98
 
-SRC		=	main.cpp	\
-			Server/Server.cpp \
+SRC		=	main.cpp					\
+			Server/Server.cpp 			\
+			PollManager/PollManager.cpp \
  
 OBJS	=	$(SRC:.cpp=.o)
 
