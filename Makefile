@@ -4,6 +4,7 @@ CC		=	g++
 FLAGS	=	-Wall -Wextra -Werror -std=c++98
 
 SRC		=	main.cpp	\
+			Server/Server.cpp \
  
 OBJS	=	$(SRC:.cpp=.o)
 
@@ -25,10 +26,8 @@ $(NAME) : $(OBJS)
 	@echo "\/      \/_____\____/ \/ \_/\____/ 					 "
 	@echo "         |_____|                   					 "
 	@echo "														 "
-	@echo "by ngastana && emunoz && uxmancis					 "
-	@echo "	$(RESET)											 "
-                                                    
-                                                    
+	@echo "by ngastana && emunoz && uxmancis                     "
+                                                                                           
 %.o: %.cpp
 	@echo "$(YELLOW)Compiling $<$(RESET)"
 	@$(CC) $(FLAGS) -c $< -o $@
