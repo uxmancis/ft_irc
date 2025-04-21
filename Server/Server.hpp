@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#define ADDRESS = "0.0.0.0";
 class Server {
     public:
         Server(int port, const std::string& password);
@@ -27,7 +28,7 @@ class Server {
         std::string _ip;
         std::string _password;
     
-        std::string _getLocalIP(void);
+        std::string _getLocalIP();
     };
 
 #endif

@@ -8,23 +8,8 @@ Server::~Server()
         close(_serverFd);
 }
 
-std::string Server::_getLocalIP(void) 
-{
-    char hostname[256];
-    if (gethostname(hostname, sizeof(hostname)) == -1) 
-        return (std::cerr << "Error obteniendo hostname\n", "");
-    hostent* host = gethostbyname(hostname);
-    if (!host || !host->h_addr_list[0]) 
-        return (std::cerr << "Error obteniendo IP local\n", "");
-    return (inet_ntoa(*(struct in_addr*)host->h_addr_list[0]));
-}
-
 bool Server::setup(void) 
 {
-    _ip = _getLocalIP();
-    if (_ip.empty()) 
-        return false;
-
     _serverFd = socket(AF_INET, SOCK_STREAM, 0);
     if (_serverFd < 0) 
         return (std::cerr << "Error socket\n", false);
@@ -33,10 +18,10 @@ bool Server::setup(void)
     int opt = 1;
     setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    sockaddr_in addr; {};
+    sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(_port);
-    addr.sin_addr.s_addr = inet_addr(_ip.c_str());
+    addr.sin_addr.s_addr = inet_addr("10.14.8.3");
 
     if (bind(_serverFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
         return (std::cerr << "Error bind\n", false);
@@ -44,7 +29,7 @@ bool Server::setup(void)
     if (listen(_serverFd, SOMAXCONN) < 0)
         return (std::cerr << "Error listen\n", false);
 
-    std::cout << "Servidor escuchando en " << _ip << ":" << _port << std::endl;
+    std::cout << "Servidor escuchando en " << "10.14.8.3" << ":" << _port << std::endl;
     std::cout << "Presiona ENTER para salir.\n";
     std::cin.get();
     close(_serverFd);
