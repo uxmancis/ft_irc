@@ -12,7 +12,9 @@
 
 * IPv4: Internet Protocol version 4
 *
-* 👀 man socket
+* 👀 SOCKET creation = "Hey Operating System, I want to create a new 
+* communication endpoint using IPv4 and TCP."
+*
 * int socket(int domain, int type, int protocol);
 *        > domain: Address family (AF_INET for IPv4, e.g. 192.168.1.1)
 *        > type: Type of socket (SOCK_STREAM for TCP), how data will be sent.
@@ -22,21 +24,15 @@
 *                SOCK_DGARAM: uses UDP protocol as default
 *        > return: file descriptor for the socket
 *
-* Objective: to create a socket for communication
-* What is a socket?
-* A socket is an endpoint for communication between two machines.
-* It is a combination of an IP address and a port number.
-* A socket is a software structure that allows communication between two processes.
-* It is a way to send and receive data over a network.
-* A socket is a way to communicate between two machines over a network.
+* At this point, the socket is just a concept, represented by a fd. Still 
+* not connected to anything (no IP address or port). T
 * 
 */
-int get_socket()
+int create_socket()
 {
 	int serverSocket;
 
 	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    //printf("socket: %d\n", serverSocket);
 	if (serverSocket == -1)
 	{
         std::cerr << "Error: failed to create socket" << std::endl;
@@ -52,13 +48,14 @@ int check_exec_input(int argc, char **argv)
     {
         std::cerr << RED "Incorrect input." WHITE " Try again: " << argv[0] << " <port> <password>\n" << std::endl;
         return (EXIT_FAILURE);
+        printf("helo\n");
     }
     return (0);
 }
 
 /* 127.0.0.1 = "This computer"
 *
-* Socket 
+* Socket e.g.: 23.43.115.12:6250 (IP Address:Port)
 */
 int main(int argc, char **argv)
 {
@@ -67,7 +64,7 @@ int main(int argc, char **argv)
 
     check_exec_input(argc, argv);
     // Step 1: Create the socket
-	serverSocket = get_socket();
+	serverSocket = create_socket();
     printf("argc: %d\n", argc);
     (void)argv;
 		
