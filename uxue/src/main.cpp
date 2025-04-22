@@ -56,47 +56,99 @@ int check_exec_input(int argc, char **argv)
 /* 127.0.0.1 = "This computer"
 *
 * Socket e.g.: 23.43.115.12:6250 (IP Address:Port)
+* How to create a server:
+*
+*       1) socket function: Create socket, get fd
+*       2) bind function: Bind socket to port (e.g. 6667)
+*       3) listen function: Listen for incoming connections
+*       4) accept function: Accept incoming connection
+*       5) read/write function: Read/write data to/from socket
+*       6) close function: Close socket
+*       7) exit function: Exit program
+*       8) free function: Free memory
+*       9) shutdown function: Shutdown socket
+*       10) select function: Monitor multiple sockets
+*       11) poll function: Monitor multiple sockets
+*       12) epoll function: Monitor multiple sockets
+*       13) getsockname function: Get socket name
+*       14) getpeername function: Get peer name
 */
 int main(int argc, char **argv)
 {
-    int serverSocket;
-    int port = 7777;
+    int socketfd = socket(AF_INET, SOCK_STREAM, 0);
+    int port = 6774;
 
-    check_exec_input(argc, argv);
+    //check_exec_input(argc, argv);
     // Step 1: Create the socket
-	serverSocket = create_socket();
-    printf("argc: %d\n", argc);
+	//socketfd = create_socket();
+    // printf("argc: %d\n", argc);
     (void)argv;
+    (void)argc;
 		
     // Step 2: Set up the server address struct
     struct sockaddr_in serverAddr;
     std::memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
-    serverAddr.sin_port = htons(port);
+    serverAddr.sin_family = AF_INET; //2 bytes (AF:INET for IPv4)
+    serverAddr.sin_addr.s_addr = inet_addr("0.0.0.0"); //4 bytes (IPv4 address)
+    serverAddr.sin_port = htons(port); //2 bytes (e.g. 8080, but in networ byte order)
+    printf("****serverAddr.sin_family: %d\n", serverAddr.sin_port);
+    printf("****serverAddr.sin_addr.s_addr: %d\n", serverAddr.sin_port);
+    printf("****serverAddr.sin_port: %d\n", serverAddr.sin_port);
 
     // Step 3: Bind the socket to the port
-    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+    /*  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+            > sockfd: Socket file descriptor
+            > addr: Pointer to the address structure
+            > addrlen: Size of the address structure
+            > return: 0 on success, -1 on error
+    */
+    if (bind(socketfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
         std::cerr << "Error: bind failed" << std::endl;
-        close(serverSocket);
+        close(socketfd);
         return 1;
     }
 
-    // Step 4: Start listening
-    if (listen(serverSocket, 5) < 0) {
+    // Get actual socket info
+    struct sockaddr_in boundAddr;
+    socklen_t len = sizeof(boundAddr);
+    if (getsockname(socketfd, (struct sockaddr*)&boundAddr, &len) == -1) {
+        perror("getsockname failed");
+        return 1;
+    }
+
+    // Convert IP to readable string
+    char ipStr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(boundAddr.sin_addr), ipStr, sizeof(ipStr));
+
+    // Convert port to host byte order
+   port = ntohs(boundAddr.sin_port);
+
+    // Print with printf
+    printf("Socket bound to IP: %s, Port: %d\n", ipStr, port);
+
+    // Step 4: Start listening for incoming connections, makes it a passive socket (information endpoint)
+    //int listen(int sockfd, int backlog);
+    //Backlog: maximum possible queue, number of potential client connections waiting to be accepted
+    if (listen(socketfd, 5) < 0) {
         std::cerr << "Error: listen failed" << std::endl;
-        close(serverSocket);
+        close(socketfd);
         return 1;
     }
     std::cout << "Server is listening on port " << port << "..." << std::endl;
 
     // Step 5: Accept a connection (blocking)
+    /* Every new connection, every new client request accepted results in
+    a new socket*/
+    /* In TCP/IP communication, each connection is uniquely identified by
+    a 4-tuple: Server IP, Server port, client IP, client port. Each client 
+    that connects to a server uses a unique socket = a unique combination
+    of client IP address and client port*/
     struct sockaddr_in clientAddr;
     socklen_t clientLen = sizeof(clientAddr);
-    int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+    int clientSocket = accept(socketfd, (struct sockaddr*)&clientAddr, &clientLen);
     if (clientSocket < 0) {
         std::cerr << "Error: accept failed" << std::endl;
-        close(serverSocket);
+        close(socketfd);
         return 1;
     }
 
@@ -105,7 +157,7 @@ int main(int argc, char **argv)
 
     // Step 6: Close sockets (clean up)
     close(clientSocket);
-    close(serverSocket);
+    close(socketfd);
 
     return 0;
 }

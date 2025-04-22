@@ -19,7 +19,7 @@
 #include <unistd.h> //close()
 #include <sys/types.h>
 #include <sys/socket.h> //socket(), bind(), listen(), accept()
-#include <netinet/in.h> // For sockaddr_in
+#include <netinet/in.h> // For sockaddr_in structure
 #include <arpa/inet.h>  // For inet_ntoa
 #include <stdio.h>
 #include <stdlib.h> //EXIT_FAILURE
