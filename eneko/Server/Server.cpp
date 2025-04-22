@@ -19,13 +19,10 @@ Server::Server(int port, const std::string& password) : _password(password)
 
     if (listen(_serverFD, SOMAXCONN) < 0)
         throw std::runtime_error("Listen failed");
-
     fcntl(_serverFD, F_SETFL, O_NONBLOCK);
-    PollManager pollManager(_serverFD);
+    PollManager pollManager(_serverFD, _password);
     std::cout << "Servidor iniciado en el puerto " << port << std::endl;
-    std::cout << "Presiona ENTER para salir.\n";
-    std::cin.get();
-    close(_serverFD);
+    pollManager.run();
 }
 
 Server::~Server() 
