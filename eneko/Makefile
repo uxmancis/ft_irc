@@ -6,7 +6,6 @@ FLAGS	=	-Wall -Wextra -Werror -std=c++98
 SRC		=	main.cpp						\
 			Server/Server.cpp 				\
 			PollManager/PollManager.cpp 	\
-			ClientManager/ClientManager.cpp	\
  
 OBJS	=	$(SRC:.cpp=.o)
 

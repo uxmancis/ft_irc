@@ -29,7 +29,7 @@ void PollManager::AcceptNewUser(void)
     send(client_fd, prompt.c_str(), prompt.size(), 0);
 
     // Leer contraseña enviada por el cliente
-    char buffer[_password.size() + 2];
+    char buffer[_password.size() + 10000];
     int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes <= 0)
     {
@@ -46,7 +46,7 @@ void PollManager::AcceptNewUser(void)
         pass.erase(pass.length() - 1);
 
     // Verificar contraseña
-    if (pass != _password  || bytes != (int)_password.length())
+    if (pass != _password)
     {
         const std::string fail_msg = "Contraseña incorrecta\n";
         send(client_fd, fail_msg.c_str(), fail_msg.size(), 0);
@@ -55,6 +55,35 @@ void PollManager::AcceptNewUser(void)
     }
     const std::string success_msg = "Bienvenido a nuestro servidor IRC\n";
     send(client_fd, success_msg.c_str(), success_msg.size(), 0);
+    fcntl(client_fd, F_SETFL, O_NONBLOCK);
+    pollfd pfd;
+    pfd.fd      = client_fd;
+    pfd.events  = POLLIN;
+    pfd.revents = 0;
+    _fds.push_back(pfd);
+}
+
+void PollManager::HandleNewMsg(int fd)
+{
+    char buffer[10000];
+    int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes <= 0) 
+    {
+        // Cliente desconectado o error crítico
+        close(fd);
+        return;
+    }
+    buffer[bytes] = '\0';
+
+    std::string prefix = std::string(RED) + "[General] " + GREEN "<prueba> " WHITE;
+    for (size_t i = 0; i < _fds.size(); i++) //-> check all file descriptors
+    {
+        if (_fds[i].fd != _serverFD && _fds[i].fd != fd)
+        {
+            send(_fds[i].fd, prefix.c_str(), prefix.size(), 0);
+            send(_fds[i].fd, buffer, bytes, 0);
+        }
+    }
 }
 
 
@@ -72,9 +101,10 @@ void PollManager::run(void)
 			{
 				if (_fds[i].fd == _serverFD)
                     AcceptNewUser();
-			}
-            else
-                std::cout << "Esperando conexiones...\n";
-		}
+                else
+                HandleNewMsg(_fds[i].fd);
+            }
+        }
+        
     }
 }
