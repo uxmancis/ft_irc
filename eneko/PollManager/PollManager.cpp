@@ -1,10 +1,4 @@
 #include "PollManager.hpp"
-#include <iostream>
-#include <unistd.h>
-#include <cstring>
-#include <netinet/in.h>
-#include <fcntl.h>
-#include <sys/socket.h>
 
 PollManager::PollManager(int serverFD, std::string password) : _password(password), _serverFD(serverFD)
 {
@@ -16,32 +10,71 @@ PollManager::PollManager(int serverFD, std::string password) : _password(passwor
 
 void PollManager::AcceptNewUser(void)
 {
-    int client_fd = accept(_serverFD, NULL, NULL);
-    send(client_fd, "Introduce la contraseña: ", 27, 0);
-    char   buffer[_password.length() + 1];
-    int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-    buffer[bytes] = '\0';
-    std::string pass  = buffer;
-    if (pass != _password)
+    sockaddr_in client_addr;
+    socklen_t addr_len = sizeof(client_addr);
+
+    int client_fd = accept(_serverFD, (sockaddr*)&client_addr, &addr_len);
+    if (client_fd < 0)
     {
-        send(client_fd, "Contraseña incorrecta\n", 24, 0);
-        close(client_fd);
-        return ;
+        return;
     }
-    send(client_fd, "Hola", 5, 0);
+
+    // Obtener IP como string
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &client_addr.sin_addr, ip_str, sizeof(ip_str));
+    std::cout << "Nueva conexión desde IP: " << ip_str << std::endl;
+
+    // Pedir contraseña
+    const std::string prompt = "Introduce la contraseña: ";
+    send(client_fd, prompt.c_str(), prompt.size(), 0);
+
+    // Leer contraseña enviada por el cliente
+    char buffer[_password.size() + 2];
+    int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes <= 0)
+    {
+        close(client_fd);
+        return;
+    }
+    buffer[bytes] = '\0';
+    std::string pass = buffer;
+
+    // Limpiar posible salto de línea
+    if (!pass.empty() && pass[pass.length() - 1] == '\n')
+        pass.erase(pass.length() - 1);
+    if (!pass.empty() && pass[pass.length() - 1] == '\r')
+        pass.erase(pass.length() - 1);
+
+    // Verificar contraseña
+    if (pass != _password  || bytes != (int)_password.length())
+    {
+        const std::string fail_msg = "Contraseña incorrecta\n";
+        send(client_fd, fail_msg.c_str(), fail_msg.size(), 0);
+        close(client_fd);
+        return;
+    }
+    const std::string success_msg = "Bienvenido a nuestro servidor IRC\n";
+    send(client_fd, success_msg.c_str(), success_msg.size(), 0);
 }
+
 
 void PollManager::run(void)
 {
     std::cout << "Esperando conexiones...\n";
     while (true) 
     {
-        int n = poll(_fds.data(), _fds.size(), -1);
-        if (n < 0) 
-        {
-            std::cerr << "Poll error\n";
-            break;
-        }
-        AcceptNewUser();
+        if((poll(&_fds[0],_fds.size(),-1) == -1)) //-> wait for an event
+			throw(std::runtime_error("poll() faild"));
+
+		for (size_t i = 0; i < _fds.size(); i++) //-> check all file descriptors
+		{
+			if (_fds[i].revents & POLLIN)//-> check if there is data to read
+			{
+				if (_fds[i].fd == _serverFD)
+                    AcceptNewUser();
+			}
+            else
+                std::cout << "Esperando conexiones...\n";
+		}
     }
 }

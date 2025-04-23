@@ -1,9 +1,18 @@
 #ifndef POLLMANAGER_HPP
 # define POLLMANAGER_HPP
 
+#include "../ClientManager/ClientManager.hpp"
+
 #include <vector>
 #include <poll.h>
 #include <string>
+#include <iostream>
+#include <unistd.h>
+#include <cstring>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 class PollManager 
 {
