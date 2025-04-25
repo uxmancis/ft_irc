@@ -11,7 +11,8 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-# include <map>
+#include <map>
+#include <algorithm>
 #include "Client.hpp"
 
 #define RESET   "\033[0m"
@@ -29,19 +30,20 @@ class PollManager
     public:
         PollManager(int serverFD, std::string password);
 
-        void    AcceptNewUser(void);
         void    HandleNewMsg(int fd);
         void    run(void);
         
     private:
-        std::string         _password;
-        int                 _serverFD;
-        std::vector<pollfd> _fds;
-        /*
-        typedef std::map<std::string, Client>		mapClient;
-        mapClient _clients; */
-        std::vector<Client> _client;
-
+		std::string                                     _password;
+		int                                             _serverFD;
+		std::vector<pollfd>                             _fds;
+		std::map<std::string, std::vector<int> >		_mapAdmin;
+		std::map<std::string, std::vector<int> >		_mapGroup;
+		std::vector<Client>                             _client;
+		void        AcceptNewUser();
+        bool        authenticateClient(int client_fd);
+        std::string requestInput(int client_fd, const std::string& msg);
+        void        trimNewlines(std::string& str);
 };
 
 #endif
