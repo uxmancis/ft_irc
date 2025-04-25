@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+# include <map>
+#include "Client.hpp"
 
 #define RESET   "\033[0m"
 #define RED     "\033[31m"
@@ -21,6 +23,7 @@
 #define CYAN    "\033[36m"
 #define WHITE   "\033[37m"
 
+
 class PollManager 
 {
     public:
@@ -29,11 +32,15 @@ class PollManager
         void    AcceptNewUser(void);
         void    HandleNewMsg(int fd);
         void    run(void);
-
+        
     private:
         std::string         _password;
         int                 _serverFD;
         std::vector<pollfd> _fds;
+        /*
+        typedef std::map<std::string, Client>		mapClient;
+        mapClient _clients; */
+        std::vector<Client> _client;
 
 };
 

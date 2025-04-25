@@ -53,9 +53,41 @@ void PollManager::AcceptNewUser(void)
         close(client_fd);
         return;
     }
-    const std::string success_msg = "Bienvenido a nuestro servidor IRC\n";
+    std::string success_msg = "Bienvenido a nuestro servidor IRC\n";
     send(client_fd, success_msg.c_str(), success_msg.size(), 0);
+    success_msg = "Set your IRC nickname\n";
+    send(client_fd, success_msg.c_str(), success_msg.size(), 0);
+    bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes <= 0)
+    {
+        close(client_fd);
+        return;
+    }
+    buffer[bytes] = '\0';
+    std::string nickname_buffer = buffer;
+    if (!nickname_buffer.empty() && nickname_buffer[nickname_buffer.length() - 1] == '\n')
+    nickname_buffer.erase(nickname_buffer.length() - 1);
+    if (!nickname_buffer.empty() && nickname_buffer[nickname_buffer.length() - 1] == '\r')
+    nickname_buffer.erase(nickname_buffer.length() - 1);
+    
+    success_msg = "Set your IRC username\n";
+    send(client_fd, success_msg.c_str(), success_msg.size(), 0);
+    bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes <= 0)
+    {
+        close(client_fd);
+        return;
+    }
+    buffer[bytes] = '\0';
+    std::string username_buffer = buffer;
+    if (!username_buffer.empty() && username_buffer[username_buffer.length() - 1] == '\n')
+    username_buffer.erase(username_buffer.length() - 1);
+    if (!username_buffer.empty() && username_buffer[username_buffer.length() - 1] == '\r')
+    username_buffer.erase(username_buffer.length() - 1);
+    
     fcntl(client_fd, F_SETFL, O_NONBLOCK);
+    Client new_client(client_fd, nickname_buffer, username_buffer);
+    _client.push_back(new_client);
     pollfd pfd;
     pfd.fd      = client_fd;
     pfd.events  = POLLIN;
@@ -69,13 +101,18 @@ void PollManager::HandleNewMsg(int fd)
     int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes <= 0) 
     {
-        // Cliente desconectado o error crítico
         close(fd);
         return;
     }
     buffer[bytes] = '\0';
-
-    std::string prefix = std::string(RED) + "[General] " + GREEN "<prueba> " WHITE;
+    std::string prefix;
+    for (size_t i = 0; i < _client.size(); i++)
+    {
+        if (_client[i]._client_fd == fd && _fds[i].fd != fd)
+        {
+            prefix = std::string(RED) + "[General] " + GREEN "<" + _client[i]._nickname + "> " + WHITE;
+        }
+    }
     for (size_t i = 0; i < _fds.size(); i++) //-> check all file descriptors
     {
         if (_fds[i].fd != _serverFD && _fds[i].fd != fd)
@@ -86,20 +123,19 @@ void PollManager::HandleNewMsg(int fd)
     }
 }
 
-
 void PollManager::run(void)
 {
     std::cout << "Esperando conexiones...\n";
     while (true) 
     {
         if((poll(&_fds[0],_fds.size(),-1) == -1)) //-> wait for an event
-			throw(std::runtime_error("poll() faild"));
+            throw(std::runtime_error("poll() faild"));
 
-		for (size_t i = 0; i < _fds.size(); i++) //-> check all file descriptors
-		{
-			if (_fds[i].revents & POLLIN)//-> check if there is data to read
-			{
-				if (_fds[i].fd == _serverFD)
+        for (size_t i = 0; i < _fds.size(); i++) //-> check all file descriptors
+        {
+            if (_fds[i].revents & POLLIN)//-> check if there is data to read
+            {
+                if (_fds[i].fd == _serverFD)
                     AcceptNewUser();
                 else
                 HandleNewMsg(_fds[i].fd);
