@@ -3,10 +3,24 @@ NAME	=	ircserv
 CC		=	g++
 FLAGS	=	-Wall -Wextra -Werror -std=c++98
 
-SRC		=	main.cpp					\
-			Server/Server.cpp 			\
-			PollManager/PollManager.cpp \
- 
+SRC		=	main.cpp						\
+			Server/Server.cpp 				\
+			Poll/PollManager.cpp 			\
+			Client/Client.cpp 				\
+			Channel/Channel.cpp 			\
+			Commands/Commands.cpp 			\
+			Commands/HandleHelp.cpp 		\
+			Commands/HandleIlustrate.cpp 	\
+			Commands/HandleInvite.cpp 		\
+			Commands/HandleJoin.cpp 		\
+			Commands/HandleKick.cpp 		\
+			Commands/HandleMsg.cpp 			\
+			Commands/HandleNick.cpp 		\
+			Commands/HandleQuit.cpp 		\
+			Commands/HandleTopic.cpp 		\
+			Commands/HandleUser.cpp 		\
+			Commands/HandleMode.cpp 		\
+
 OBJS	=	$(SRC:.cpp=.o)
 
 YELLOW	=	\033[1;33m

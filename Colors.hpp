@@ -1,0 +1,10 @@
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN    "\033[36m"
+#define WHITE   "\033[37m"
+
+#define WELCOMEMSG     "\033[36m 🌐 Bienvenido al servidor IRC!\n-----------------------------------\nComandos básicos disponibles:\n - /nick <nombre>      -> Establece tu nickname\n - /user <nombre>      -> Establece tu username\n - /join <#canal>      -> Únete a un canal\n"" - /msg <user> <msg>   -> Envía un mensaje privado\n - /quit               -> Salir del servidor\n-----------------------------------\n¡Disfruta tu estancia en el canal General!\n\033[0m"
