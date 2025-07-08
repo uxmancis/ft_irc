@@ -66,7 +66,7 @@ void PollManager::removeClient(Client* client)
     }
     std::cout << YELLOW "[INFO] Cliente desconectado: " << fd << std::endl;
     close(fd);
-    getClients().erase(fd);
+/*     getClients().erase(fd); */
 }
 
 
@@ -87,7 +87,8 @@ void PollManager::acceptNewClient()
     pfd.fd = clientFD;
     pfd.events = POLLIN;
     _fds.push_back(pfd);
-    std::cout << GREEN "[SERVER] Cliente conectado en FD " << clientFD << "\n" RESET;
+    /* std::cout << GREEN "[SERVER] Cliente conectado en FD " << clientFD << "\n" RESET; */
+    
 }
 
 
@@ -209,6 +210,9 @@ void PollManager::run()
     std::cout << GREEN "[SERVER] Esperando conexiones...\n" RESET;
     _channels["#general"] = Channel("#general", "", false, false);
 
+/*     int test;
+
+    test = 4; */
     while (true) 
     {
         int poll_count = poll(_fds.data(), _fds.size(), -1);
@@ -308,6 +312,7 @@ void PollManager::run()
                             }
                             
                             client.setState(READY);
+                            std::cout << GREEN "[SERVER] Cliente conectado en FD " << client.getClientFD() << "\n" RESET;
                         
                             // Añadir cliente al canal general
                             client.setActualGroup("#general");
@@ -330,6 +335,11 @@ void PollManager::run()
                         // Si ya está listo, procesa comandos IRC normales (ej. JOIN, PRIVMSG)
                         if (client.getState() == READY) 
                         {
+                          /*   std::string response;
+                            response += ":" + client.getNickname() + "!" + client.getUsername() + "@" + "host" + " JOIN :" + "#general" + "\r\n";    
+                            if (test == client.getClientFD())
+                                send(client.getClientFD(), response.c_str(), response.size(), 0);
+                            test++; */
                             HandleInput(client.getClientFD(), *this, line);
                         }
                     }

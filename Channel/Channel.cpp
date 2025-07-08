@@ -64,6 +64,9 @@ void Channel::addUser(Client* client)
         }
     }
     _regularUsers.push_back(client);
+    std::string response;
+    response += ":" + client->getNickname() + "!" + client->getUsername() + "@" + "host" + " JOIN :" + "#general" + "\r\n";    
+    send(client->getClientFD(), response.c_str(), response.size(), 0);
 }
 
 void Channel::removeUser(Client* client) 

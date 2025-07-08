@@ -90,5 +90,15 @@ void HandleJOIN(int fd, const std::vector<std::string>& args, PollManager& pollM
         "        · l: Set/remove the user limit to channel\n"
         "\n";
         send(fd, help.c_str(), help.size(), 0);
+
+        /* sendJoinReplies() */
+       std::string response;
+       response += ":" + client.getNickname() + "!" + client.getUsername() + "@" + "host" + " JOIN :" + channelName + "\r\n";
+           /* Mensajes adicionales opcionales para que figuren en la nueva pestaña */
+           response += ":irc_guapitos 332 " + client.getNickname() + " " + channelName + " :" + "topic" + "\r\n";
+           response += ":irc_guapitos 333 " + client.getNickname() + " " + channelName + " " + "setby" + " " + "std::to_string(timestamp)" + "\r\n";
+           response += ":irc_guapitos 353 " + client.getNickname() + " = " + channelName + " :@" + client.getNickname() + "\r\n";
+           response += ":irc_guapitos 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+       send(fd, response.c_str(), response.size(), 0);
     }
 }

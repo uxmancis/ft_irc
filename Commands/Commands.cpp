@@ -4,6 +4,7 @@
 
 void HandleCommands(int fd, const std::string& command, PollManager& pollManager)
 {
+    std::cout << GREEN "[SERVER] MIERDON\n" RESET;
     std::istringstream iss(command);
     std::string cmd;
     iss >> cmd;
@@ -100,9 +101,7 @@ void HandleInput(int fd, PollManager& pollManager, const std::string& command)
 {
     if (command.empty())
         return;
-
     HandleCommands(fd, command, pollManager);
-
     HandleMsg(fd, command, pollManager);
 
 }

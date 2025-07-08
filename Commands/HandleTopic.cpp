@@ -19,7 +19,6 @@ void HandleTOPIC(int fd, const std::vector<std::string>& args, PollManager& poll
     {
         if (chIt->first == clannelname)
         {
-            std::cout << "ESTOY AQUI" << std::endl;
             Channel& chan = chIt->second;
             std::string topic;
             bool isAdmin = false;
@@ -45,6 +44,9 @@ void HandleTOPIC(int fd, const std::vector<std::string>& args, PollManager& poll
             std::string msg = "\033[32mEl topic del canal: " + clannelname + " se ha cambiado de " + chan.getTopic() + "a " + topic + "\033[0m\n";
             send(fd, msg.c_str(), msg.size(), 0);
             chan.setChannelTopic(topic);
+            std::string response;
+            if (!topic.empty())
+                response += ":irc_guapitos 332 " + client.getNickname() + " " + clannelname + " :" + topic + "\r\n";            
             return;
         }
     }
