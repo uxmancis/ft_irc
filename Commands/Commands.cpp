@@ -11,33 +11,33 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
     std::string arg;
     while (iss >> arg) 
         args.push_back(arg);
-    if (cmd == "/JOIN" || cmd == "/join")
+    if (cmd == "JOIN" || cmd == "join")
         HandleJOIN(fd, args, pollManager);
-    else if (cmd == "/NICK" || cmd == "/nick")
+    else if (cmd == "NICK" || cmd == "nick")
         HandleNICK(fd, args, pollManager);
-    else if (cmd == "/USER" || cmd == "/user")
+    else if (cmd == "USER" || cmd == "user")
         HandleUSER(fd, args, pollManager);
-    else if (cmd == "/MSG" || cmd == "/msg")
+    else if (cmd == "MSG" || cmd == "msg")
         HandleMSG(fd, args, pollManager);
-    else if (cmd == "/HELP" || cmd == "/help")
+    else if (cmd == "HELP" || cmd == "help")
         HandleHELP(fd);
-    else if (cmd == "/ILUSTRATE" || cmd == "/ilustrate")
+    else if (cmd == "ILUSTRATE" || cmd == "ilustrate")
         HandleILUSTRATE(fd, pollManager);
-    else if (cmd == "/QUIT" || cmd == "/quit")
+    else if (cmd == "QUIT" || cmd == "quit")
         HandleQUIT(fd, pollManager);
-    else if (cmd == "/KICK" || cmd == "/kick")
+    else if (cmd == "KICK" || cmd == "kick")
         HandleKICK(fd, args, pollManager);
-    else if (cmd == "/INVITE" || cmd == "/invite")
+    else if (cmd == "INVITE" || cmd == "invite")
         HandleINVITE(fd, args, pollManager);
-    else if (cmd == "/TOPIC" || cmd == "/topic")
+    else if (cmd == "TOPIC" || cmd == "topic")
         HandleTOPIC(fd, args, pollManager);
-    else if (cmd == "/MODE" || cmd == "/mode")
+    else if (cmd == "MODE" || cmd == "mode")
         HandleMODE(fd, args, pollManager);   
-    else
+/*     else
     {
         std::string error = "\033[31mComando no reconocido: " + cmd + "\033[0m\n";
         send(fd, error.c_str(), error.size(), 0);
-    }
+    } */
 }
 
 
@@ -72,7 +72,7 @@ void HandleMsg(int fd, const std::string& msg, PollManager& pollManager)
     send(fd, "\r", 1, 0);
 }
 
-void HandleInput(int fd, PollManager& pollManager)
+/* void HandleInput(int fd, PollManager& pollManager)
 {
     char buffer[512];
     int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
@@ -94,4 +94,16 @@ void HandleInput(int fd, PollManager& pollManager)
     else
         HandleMsg(fd, command, pollManager);
     return ;
+} */
+
+void HandleInput(int fd, PollManager& pollManager, const std::string& command)
+{
+    if (command.empty())
+        return;
+
+    HandleCommands(fd, command, pollManager);
+
+    HandleMsg(fd, command, pollManager);
+
 }
+

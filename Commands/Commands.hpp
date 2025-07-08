@@ -15,7 +15,8 @@
 
 class PollManager;
 
-void HandleInput(int fd, PollManager& pollManager);
+/* void HandleInput(int fd, PollManager& pollManager); */
+void HandleInput(int fd, PollManager& pollManager, const std::string& command);
 void HandleCommands(int fd, const std::string& command, PollManager& pollManager);
 void HandleUSER(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleNICK(int fd, const std::vector<std::string>& args, PollManager& pollManager);

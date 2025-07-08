@@ -6,7 +6,7 @@
 #include <cstring>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <sstream>
 
 PollManager::PollManager(int serverFD, const std::string& password) : _password(password), _serverFD(serverFD)
 {
@@ -88,7 +88,6 @@ void PollManager::acceptNewClient()
     pfd.events = POLLIN;
     _fds.push_back(pfd);
     std::cout << GREEN "[SERVER] Cliente conectado en FD " << clientFD << "\n" RESET;
-    send(clientFD, "\033[33mIntroduce la contraseña: \033[0m", 36, 0);
 }
 
 
@@ -108,7 +107,7 @@ std::string PollManager::requestInput(int clientFD, const std::string& prompt)
     return (str);
 }
 
-void PollManager::run()
+/* void PollManager::run()
 {
     std::cout << GREEN "[SERVER] Esperando conexiones...\n" RESET;
     _channels["General"] = Channel("General", "", false, false);
@@ -202,5 +201,140 @@ void PollManager::run()
             }
         }
     }
-}
+} */
 
+
+void PollManager::run()
+{
+    std::cout << GREEN "[SERVER] Esperando conexiones...\n" RESET;
+    _channels["#general"] = Channel("#general", "", false, false);
+
+    while (true) 
+    {
+        int poll_count = poll(_fds.data(), _fds.size(), -1);
+        if (poll_count < 0)
+            throw std::runtime_error("poll() falló");
+
+        for (size_t i = 0; i < _fds.size(); ++i) 
+        {
+            if (_fds[i].revents & POLLIN) 
+            {
+                if (_fds[i].fd == _serverFD)
+                {
+                    acceptNewClient();
+                }
+                else 
+                {
+                    Client& client = _clients[_fds[i].fd];
+                    char buffer[512];
+                    int bytes = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
+
+                    if (bytes <= 0) 
+                    {
+                        removeClient(&client);
+                        --i;
+                        continue;
+                    }
+
+                    buffer[bytes] = '\0';
+                    std::string input(buffer);
+                    std::istringstream iss(input);
+                    std::string line;
+                    while (std::getline(iss, line)) 
+                    {
+                        if (!line.empty() && line.back() == '\r')
+                            line.pop_back();
+
+                        std::istringstream lineStream(line);
+                        std::string command;
+                        lineStream >> command;
+
+                        if (command == "PASS") 
+                        {
+                            std::string pass;
+                            lineStream >> pass;
+                            client.setPassword(pass);
+                        }
+                        else if (command == "NICK") 
+                        {
+                            std::string nick;
+                            lineStream >> nick;
+
+                            // Comprobar si nickname está en uso
+                            bool taken = false;
+                            std::map<int, Client>::iterator it;
+                            for (it = _clients.begin(); it != _clients.end(); ++it)
+                            {
+                              
+                                Client& c = it->second;
+                                if (c.getNickname() == nick && c.getClientFD() != client.getClientFD()) 
+                                {
+                                    taken = true;
+                                    break;
+                                }
+                            }
+                            if (taken) 
+                            {
+                                std::string msg = ":irc.local 433 * " + nick + " :Nickname is already in use\r\n";
+                                send(client.getClientFD(), msg.c_str(), msg.size(), 0);
+                            } 
+                            else 
+                            {
+                                client.setNickname(nick);
+                            }
+                        }
+                        else if (command == "USER") 
+                        {
+                            std::string username, unused1, unused2, realname;
+                            lineStream >> username >> unused1 >> unused2;
+                            std::getline(lineStream, realname);
+                            if (!realname.empty() && realname[0] == ':')
+                                realname = realname.substr(1);
+
+                            client.setUsername(username);
+                            // Puedes almacenar realname si quieres
+                        }
+
+                        // Si ya tiene PASS, NICK y USER configurados, verifica la contraseña y da la bienvenida
+                        if (client.getPassword() != "" && client.getNickname() != "" && client.getUsername() != "" && client.getState() != READY) 
+                        {
+                            if (client.getPassword() != _password) 
+                            {
+                                std::string msg = ":irc.local 464 * :Password incorrect\r\n";
+                                send(client.getClientFD(), msg.c_str(), msg.size(), 0);
+                                removeClient(&client);
+                                --i;
+                                break;
+                            }
+                            
+                            client.setState(READY);
+                        
+                            // Añadir cliente al canal general
+                            client.setActualGroup("#general");
+                            _channels["#general"].addUser(&client);
+                        
+                            std::string nick = client.getNickname();
+                            int fd = client.getClientFD();
+                        
+                            // Mensajes para que el cliente "entre" al canal automáticamente
+                            std::string welcome = 
+                                ":irc.local 001 " + nick + " :Welcome to the IRC network\r\n"
+                                ":irc.local 002 " + nick + " :Your host is irc.local\r\n"
+                                ":irc.local 332 " + nick + " #general :Canal General\r\n"  // Topic del canal
+                                ":irc.local 353 " + nick + " = #general :" + nick + "\r\n"  // Nombres en el canal (solo el propio)
+                                ":irc.local 366 " + nick + " #general :End of /NAMES list.\r\n"; // Fin lista de usuarios
+                        
+                            send(fd, welcome.c_str(), welcome.size(), 0);
+                        }
+
+                        // Si ya está listo, procesa comandos IRC normales (ej. JOIN, PRIVMSG)
+                        if (client.getState() == READY) 
+                        {
+                            HandleInput(client.getClientFD(), *this, line);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
