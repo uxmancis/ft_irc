@@ -20,6 +20,7 @@ SRC		=	main.cpp						\
 			Commands/HandleTopic.cpp 		\
 			Commands/HandleUser.cpp 		\
 			Commands/HandleMode.cpp 		\
+			Commands/HandlePass.cpp 		\
 
 OBJS	=	$(SRC:.cpp=.o)
 

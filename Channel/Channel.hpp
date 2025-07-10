@@ -36,6 +36,10 @@ class Channel
         void setFreeTopic(bool priv);
         void setLimit(const std::string limit);
 
+        bool hasUser(Client* client) const;
+        bool isFull() const;
+        bool isAdmin(Client* client) const;
+
     private:
         std::string _name;
         std::string _pass;

@@ -93,6 +93,33 @@ void Channel::removeAdmin(Client* client)
     }
 }
 
+bool Channel::hasUser(Client* client) const 
+{
+    for (size_t i = 0; i < _regularUsers.size(); ++i) 
+    {
+        if (_regularUsers[i] == client)
+            return true;
+    }
+    return false;
+}
+
+bool Channel::isFull() const 
+{
+    int limit = std::atoi(_limit.c_str());
+    if (limit == 0)
+        return false;
+    return static_cast<int>(_regularUsers.size() + _adminUsers.size()) >= limit;
+}
+
+bool Channel::isAdmin(Client* client) const 
+{
+    for (size_t i = 0; i < _adminUsers.size(); ++i) {
+        if (_adminUsers[i] == client)
+            return true;
+    }
+    return false;
+}
+
 const std::string& Channel::getName() const                  { return _name; }
 const std::string& Channel::getTopic() const                 { return _topic; }
 const std::string& Channel::getPassword() const              { return _pass; }

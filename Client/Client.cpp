@@ -1,8 +1,8 @@
 #include "Client.hpp"
 
-Client::Client() : _clientFD(-1), _nickname(""), _username(""), _actualGroup("General") {}
+Client::Client() : _clientFD(-1), _nickname(""), _username(""), _actualGroup("#general"), _state(AWAITING_PASSWORD), _hasJoinedGeneral(false) {}
 
-Client::Client(int clientFD) : _clientFD(clientFD), _nickname(""), _username(""), _actualGroup("General") {}
+Client::Client(int clientFD) : _clientFD(clientFD), _nickname(""), _username(""), _actualGroup("#general") {}
 
 Client::~Client() {}
 
@@ -40,3 +40,7 @@ void Client::setUsername(const std::string& username)   { _username = username; 
 void Client::setActualGroup(const std::string& group)   { _actualGroup = group; }
 void Client::setState(ClientState state)                { _state = state;       }
 void Client::setPassword(const std::string& pass)       { _pass = pass;}
+
+
+bool Client::hasJoinedGeneral() const { return _hasJoinedGeneral; }
+void Client::setJoinedGeneral(bool value) { _hasJoinedGeneral = value; }

@@ -6,7 +6,7 @@ void HandleINVITE(int fd, const std::vector<std::string>& args, PollManager& pol
 {
     if (args.size() < 1)
     {
-        std::string err = "\033[31mUso: /INVITE <Usuario>\033[0m\n";
+        std::string err = "Uso: /INVITE <Usuario>\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
@@ -34,7 +34,7 @@ void HandleINVITE(int fd, const std::vector<std::string>& args, PollManager& pol
 
     if (!isAdmin)
     {
-        std::string err = "\033[31mNo eres administrador del canal.\033[0m\n";
+        std::string err = "No eres administrador del canal.\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
@@ -53,13 +53,13 @@ void HandleINVITE(int fd, const std::vector<std::string>& args, PollManager& pol
 
     if (!invited)
     {
-        std::string err = "\033[31mUsuario no encontrado.\033[0m\n";
+        std::string err = "Usuario no encontrado.\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
     if (std::atoi(channel.getLimit().c_str()) != 0 && std::atoi(channel.getLimit().c_str()) <= ((int)channel.getRegularUsers().size() + (int)channel.getAdmins().size()))
     {        
-        std::string msg = "\033[31mNo te puedes invitar al canal: " + channelName + " esta lleno.\033[0m\n";
+        std::string msg = "No te puedes invitar al canal: " + channelName + " esta lleno.\n";
         send(fd, msg.c_str(), msg.size(), 0);
         return ;
     }
@@ -68,8 +68,18 @@ void HandleINVITE(int fd, const std::vector<std::string>& args, PollManager& pol
         channels[oldGroup].removeUser(invited);
     invited->setActualGroup(channelName);
     channel.addUser(invited);
-    std::string msg = "Invitaste a \033[33m" + invited->getNickname() + "\033[0m al canal \033[36m" + channelName + "\033[0m\n";
+    std::string msg = "Invitaste a " + invited->getNickname() + " al canal" + channelName + "\n";
     send(fd, msg.c_str(), msg.size(), 0);
-    std::string msgToInvited = "Has sido invitado al canal \033[36m" + channelName + "\033[0m\n";
-    send(invited->getClientFD(), msgToInvited.c_str(), msgToInvited.size(), 0);
+
+    std::string msgToInvited = "Has sido invitado al canal" + channelName + "\n";
+
+    std::string invite_msg = ":" + invited->getNickname() + "!" + sender.getNickname() + "@" + "host" +
+                             " INVITE " + invited->getNickname() + " :" + channelName + "\r\n";
+    send(invited->getClientFD(), invite_msg.c_str(), invite_msg.length(), 0);
+
+
+    std::string reply_msg = std::string(":") + "irc_guapitos" + " 341 " + invited->getNickname() +
+                            " " + invited->getNickname() + " " + channelName + "\r\n";
+
+    send(sender.getClientFD(), reply_msg.c_str(), reply_msg.length(), 0);
 }
