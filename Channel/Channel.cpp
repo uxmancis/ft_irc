@@ -64,9 +64,6 @@ void Channel::addUser(Client* client)
         }
     }
     _regularUsers.push_back(client);
-    std::string response;
-    response += ":" + client->getNickname() + "!" + client->getUsername() + "@" + "host" + " JOIN :" + "#general" + "\r\n";    
-    send(client->getClientFD(), response.c_str(), response.size(), 0);
 }
 
 void Channel::removeUser(Client* client) 
@@ -108,7 +105,7 @@ bool Channel::isFull() const
     int limit = std::atoi(_limit.c_str());
     if (limit == 0)
         return false;
-    return static_cast<int>(_regularUsers.size() + _adminUsers.size()) >= limit;
+    return static_cast<int>(_regularUsers.size()) >= limit;
 }
 
 bool Channel::isAdmin(Client* client) const 

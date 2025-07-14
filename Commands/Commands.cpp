@@ -9,7 +9,6 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
 {
     if (command.empty())
         return;
-    std::cout << YELLOW "---- HandleCommands, command: " << command << "----" RESET << std::endl;
     std::istringstream iss(command);
     std::string cmd;
     iss >> cmd;
@@ -28,10 +27,6 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         HandleJOIN(fd, args, pollManager);
     else if (cmd == "PRIVMSG")
         HandleMSG(fd, args, pollManager);
-    else if (cmd == "HELP")
-        HandleHELP(fd);
-    else if (cmd == "ILUSTRATE")
-        HandleILUSTRATE(fd, pollManager);
     else if (cmd == "QUIT")
         HandleQUIT(fd, pollManager);
     else if (cmd == "KICK")
@@ -41,7 +36,25 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
     else if (cmd == "TOPIC")
         HandleTOPIC(fd, args, pollManager);
     else if (cmd == "MODE")
-        HandleMODE(fd, args, pollManager); 
+        HandleMODE(fd, args, pollManager);
+    else if (cmd == "WHO")
+        HandleWHO(fd, args, pollManager);
+    else if (cmd == "PING")
+        HandlePING(fd, args);
+    else if (cmd == "PART")
+        HandlePART(fd, args, pollManager);
+    else if (cmd == "NAMES")
+        HandleNAMES(fd, args, pollManager);
+    else if (cmd == "LIST")
+        HandleLIST(fd, args, pollManager);
+    else if (cmd == "NOTICE")
+        HandleNOTICE(fd, args, pollManager);
+    else if (cmd == "PONG")
+        HandlePONG(fd);
+    else if (cmd == "WHOIS")
+        HandleWHOIS(fd, args, pollManager);
+    else if (cmd == "MOTD")
+        HandleMOTD(fd, pollManager);
     else
     {
         std::string err = ":irc.local 421 " + command + " :Unknown command\r\n";

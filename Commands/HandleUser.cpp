@@ -12,6 +12,5 @@ void HandleUSER(int fd, const std::vector<std::string>& args, PollManager& pollM
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
-    const std::string& newUser = args[0];
-    client.setUsername(newUser);
+    client.setUsername(args[0]);
 }

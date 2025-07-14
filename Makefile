@@ -1,7 +1,7 @@
 NAME	=	ircserv
 
 CC		=	g++
-FLAGS	=	-Wall -Wextra -Werror
+FLAGS	=	-Wall -Wextra -Werror -std=c++98
 
 SRC		=	main.cpp						\
 			Server/Server.cpp 				\
@@ -9,8 +9,6 @@ SRC		=	main.cpp						\
 			Client/Client.cpp 				\
 			Channel/Channel.cpp 			\
 			Commands/Commands.cpp 			\
-			Commands/HandleHelp.cpp 		\
-			Commands/HandleIlustrate.cpp 	\
 			Commands/HandleInvite.cpp 		\
 			Commands/HandleJoin.cpp 		\
 			Commands/HandleKick.cpp 		\
@@ -21,6 +19,16 @@ SRC		=	main.cpp						\
 			Commands/HandleUser.cpp 		\
 			Commands/HandleMode.cpp 		\
 			Commands/HandlePass.cpp 		\
+			Commands/HandleWho.cpp 			\
+			Commands/HandlePing.cpp 		\
+			Commands/HandlePart.cpp 		\
+			Commands/HandleNames.cpp 		\
+			Commands/HandleList.cpp 		\
+			Commands/HandleNotice.cpp 		\
+			Commands/HandlePong.cpp 		\
+			Commands/HandleWhois.cpp 		\
+			Commands/HandleMotd.cpp 		\
+
 
 OBJS	=	$(SRC:.cpp=.o)
 

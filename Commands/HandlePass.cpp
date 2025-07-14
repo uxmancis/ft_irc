@@ -9,7 +9,7 @@ void HandlePASS(int fd, const std::vector<std::string>& args, PollManager& pollM
     {
         if (args.empty()) 
         {
-            std::string err = ":irc.local 461 PASS :Not enough parameters\r\n";
+            std::string err = ":irc.local 461 * PASS :Not enough parameters\r\n";
             send(fd, err.c_str(), err.size(), 0);
             pollManager.removeClient(&client);
             return;
@@ -23,6 +23,5 @@ void HandlePASS(int fd, const std::vector<std::string>& args, PollManager& pollM
             return;
         }
         client.setPassword(providedPass);
-        client.setState(AWAITING_NICKNAME);
     }
 }

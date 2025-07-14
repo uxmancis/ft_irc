@@ -1,18 +1,22 @@
 #include "Commands.hpp"
 #include <sstream>
 #include <vector>
+#include <ctime>
+#include <cstdlib>
 
 void HandleINVITE(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
     if (args.size() < 1)
     {
-        std::string err = "Uso: /INVITE <Usuario>\n";
+        std::string err = ":irc.local 461 INVITE :Usage: /INVITE <nickname>\r\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
 
     Client& sender = pollManager.getClient(fd);
-    const std::string& channelName = sender.getActualGroup();
+    // const std::string& channelName = sender.getActualGroup();
+    const std::string& channelName = args[1];
+
     std::map<std::string, Channel>& channels = pollManager.getChannels();
 
     if (channels.count(channelName) == 0)
@@ -20,66 +24,80 @@ void HandleINVITE(int fd, const std::vector<std::string>& args, PollManager& pol
 
     Channel& channel = channels[channelName];
 
-    // Verificar si el sender es admin
-    bool isAdmin = false;
-    const std::vector<Client*>& admins = channel.getAdmins();
-    for (size_t i = 0; i < admins.size(); ++i)
+    if (!channel.isAdmin(&sender)) 
     {
-        if (admins[i]->getClientFD() == fd)
-        {
-            isAdmin = true;
-            break;
-        }
-    }
-
-    if (!isAdmin)
-    {
-        std::string err = "No eres administrador del canal.\n";
+        std::string err = ":irc.local 482 " + channelName + " :You're not a channel operator\r\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
 
-    // Buscar al usuario a invitar
     Client* invited = NULL;
     std::map<int, Client>& clients = pollManager.getClients();
-    for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+    std::map<int, Client>::iterator it;
+    for (it = clients.begin(); it != clients.end(); ++it)
     {
         if (it->second.getNickname() == args[0])
         {
-            invited = &(it->second);
+            invited = &it->second;
             break;
         }
     }
 
     if (!invited)
     {
-        std::string err = "Usuario no encontrado.\n";
+        std::string err = ":irc.local 401 " + args[0] + " :No such nick\r\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
-    if (std::atoi(channel.getLimit().c_str()) != 0 && std::atoi(channel.getLimit().c_str()) <= ((int)channel.getRegularUsers().size() + (int)channel.getAdmins().size()))
-    {        
-        std::string msg = "No te puedes invitar al canal: " + channelName + " esta lleno.\n";
+
+    int limit = std::atoi(channel.getLimit().c_str());
+    if (limit > 0 && (int)(channel.getRegularUsers().size()) >= limit)
+    {
+        std::string msg = ":irc.local 471 " + channelName + " :Channel is full\r\n";
         send(fd, msg.c_str(), msg.size(), 0);
-        return ;
+        return;
     }
-    std::string oldGroup = invited->getActualGroup();
-    if (channels.count(oldGroup))
-        channels[oldGroup].removeUser(invited);
+
     invited->setActualGroup(channelName);
     channel.addUser(invited);
-    std::string msg = "Invitaste a " + invited->getNickname() + " al canal" + channelName + "\n";
-    send(fd, msg.c_str(), msg.size(), 0);
 
-    std::string msgToInvited = "Has sido invitado al canal" + channelName + "\n";
+    std::string msgToSender = ":irc.local 341 " + sender.getNickname() + " " + invited->getNickname() + " " + channelName + "\r\n";
+    send(fd, msgToSender.c_str(), msgToSender.size(), 0);
 
-    std::string invite_msg = ":" + invited->getNickname() + "!" + sender.getNickname() + "@" + "host" +
-                             " INVITE " + invited->getNickname() + " :" + channelName + "\r\n";
-    send(invited->getClientFD(), invite_msg.c_str(), invite_msg.length(), 0);
+    std::string msgToInvited = ":" + sender.getNickname() + "!user@localhost INVITE " + invited->getNickname() + " :" + channelName + "\r\n";
+    send(invited->getClientFD(), msgToInvited.c_str(), msgToInvited.size(), 0);
 
+    std::string joinMsg = ":" + invited->getNickname() + "!user@localhost JOIN " + channelName + "\r\n";
+    const std::vector<Client*>& users = channel.getRegularUsers();
+    std::vector<Client*>::const_iterator uit;
+    for (uit = users.begin(); uit != users.end(); ++uit)
+    {
+        send((*uit)->getClientFD(), joinMsg.c_str(), joinMsg.size(), 0);
+    }
 
-    std::string reply_msg = std::string(":") + "irc_guapitos" + " 341 " + invited->getNickname() +
-                            " " + invited->getNickname() + " " + channelName + "\r\n";
+    std::string usersList;
+    for (uit = users.begin(); uit != users.end(); ++uit)
+    {
+        if (channel.isAdmin(*uit))
+            usersList += "@" + (*uit)->getNickname() + " ";
+        else
+            usersList += (*uit)->getNickname() + " ";
+    }
 
-    send(sender.getClientFD(), reply_msg.c_str(), reply_msg.length(), 0);
+    std::string namesMsg = ":irc.local 353 " + invited->getNickname() + " = " + channelName + " :" + usersList + "\r\n";
+    std::string endNamesMsg = ":irc.local 366 " + invited->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+    send(invited->getClientFD(), namesMsg.c_str(), namesMsg.size(), 0);
+    send(invited->getClientFD(), endNamesMsg.c_str(), endNamesMsg.size(), 0);
+
+    if (!channel.getTopic().empty())
+    {
+        std::stringstream ss;
+        ss << time(NULL);
+
+        std::string topicMsg = ":irc.local 332 " + invited->getNickname() + " " + channelName + " :" + channel.getTopic() + "\r\n";
+        std::string topicSetMsg = ":irc.local 333 " + invited->getNickname() + " " + channelName + " " + sender.getNickname() + " " + ss.str() + "\r\n";
+
+        send(invited->getClientFD(), topicMsg.c_str(), topicMsg.size(), 0);
+        send(invited->getClientFD(), topicSetMsg.c_str(), topicSetMsg.size(), 0);
+    }
 }

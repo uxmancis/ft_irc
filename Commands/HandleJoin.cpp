@@ -2,74 +2,85 @@
 #include <sstream>
 #include <vector>
 #include <cstdlib>
+#include <ctime>
 
-
-void HandleJOIN(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void HandleJOIN(int fd, const std::vector<std::string>& args, PollManager &pollManager)
 {
     if (args.empty())
-    {
-        std::string err = ":irc.local 461 * JOIN :Not enough parameters\r\n";
-        send(fd, err.c_str(), err.size(), 0);
         return;
-    }
 
+    Client &client = pollManager.getClient(fd);
     std::string channelName = args[0];
+
     if (channelName[0] != '#')
         channelName = "#" + channelName;
 
-    Client& client = pollManager.getClient(fd);
     std::map<std::string, Channel>& channels = pollManager.getChannels();
+    bool isNew = false;
 
-    Channel* channelPtr = nullptr;
+    if (channels.find(channelName) == channels.end())
+        isNew = true;
 
-    // Si no existe el canal, crear uno nuevo
-    if (channels.count(channelName) == 0)
+    Channel& channel = channels[channelName];
+
+    if (channel.isInviteOnly())
     {
-        channels[channelName] = Channel(channelName, "", false, false);
-        channels[channelName].addAdmin(&client);
-    }
-    channelPtr = &channels[channelName];
-
-    Channel& channel = *channelPtr;
-
-    // Si ya está en otro canal, quitarlo
-    if (!client.getActualGroup().empty() && client.getActualGroup() != channelName)
-    {
-        Channel& oldChannel = channels[client.getActualGroup()];
-        oldChannel.removeUser(&client);
-        oldChannel.removeAdmin(&client);
+        std::string errMsg = ":irc.local 473 " + client.getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
+        send(fd, errMsg.c_str(), errMsg.size(), 0);
+        return;
     }
 
-    // Añadir al usuario al canal (si no está)
-    if (!channel.hasUser(&client))
+    if (!channel.getPassword().empty())
     {
-        channel.addUser(&client);
-        client.setActualGroup(channelName);
+        if (args.size() < 2 || args[1] != channel.getPassword())
+        {
+            std::string errMsg = ":irc.local 475 " + client.getNickname() + " " + channelName + " :Cannot join channel (+k)\r\n";
+            send(fd, errMsg.c_str(), errMsg.size(), 0);
+            return;
+        }
     }
 
-    // Construir mensaje JOIN
-    std::string joinMsg = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost JOIN " + channelName + "\r\n";
-
-    // Enviar JOIN a todos los usuarios del canal
-    for (Client* user : channel.getRegularUsers())
+    if (channel.isFull())
     {
-        send(user->getClientFD(), joinMsg.c_str(), joinMsg.size(), 0);
+        std::string errMsg = ":irc.local 471 " + client.getNickname() + " " + channelName + " :Cannot join channel (+l)\r\n";
+        send(fd, errMsg.c_str(), errMsg.size(), 0);
+        return;
     }
 
-    // Enviar lista de usuarios (353) al cliente que entra
-    std::string namesList = ":irc.local 353 " + client.getNickname() + " = " + channelName + " :";
+    channel.addUser(&client);
+    if (isNew)
+        channel.addAdmin(&client);
+
+    client.setActualGroup(channelName);
+
+    std::string joinMsg = ":" + client.getNickname() + "!user@localhost JOIN " + channelName + "\r\n";
+
     const std::vector<Client*>& users = channel.getRegularUsers();
-    for (size_t i = 0; i < users.size(); ++i)
+    std::vector<Client*>::const_iterator uit;
+    for (uit = users.begin(); uit != users.end(); ++uit)
+        send((*uit)->getClientFD(), joinMsg.c_str(), joinMsg.size(), 0);
+
+    std::string usersList;
+    for (uit = users.begin(); uit != users.end(); ++uit)
     {
-        namesList += users[i]->getNickname();
-        if (i != users.size() - 1)
-            namesList += " ";
+        if (channel.isAdmin(*uit))
+            usersList += "@" + (*uit)->getNickname() + " ";
+        else
+            usersList += (*uit)->getNickname() + " ";
     }
-    namesList += "\r\n";
-    send(fd, namesList.c_str(), namesList.size(), 0);
 
-    // Enviar fin de lista (366)
-    std::string endOfNames = ":irc.local 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-    send(fd, endOfNames.c_str(), endOfNames.size(), 0);
+    std::string namesMsg = ":irc.local 353 " + client.getNickname() + " = " + channelName + " :" + usersList + "\r\n";
+    std::string endNamesMsg = ":irc.local 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+    send(fd, namesMsg.c_str(), namesMsg.size(), 0);
+    send(fd, endNamesMsg.c_str(), endNamesMsg.size(), 0);
+
+    if (!channel.getTopic().empty())
+    {
+        std::stringstream ss;
+        ss << time(NULL);
+        std::string topicMsg = ":irc.local 332 " + client.getNickname() + " " + channelName + " :" + channel.getTopic() + "\r\n";
+        std::string topicSetMsg = ":irc.local 333 " + client.getNickname() + " " + channelName + " " + client.getNickname() + " " + ss.str() + "\r\n";
+        send(fd, topicMsg.c_str(), topicMsg.size(), 0);
+        send(fd, topicSetMsg.c_str(), topicSetMsg.size(), 0);
+    }
 }
-

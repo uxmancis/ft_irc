@@ -1,30 +1,37 @@
 #include "Client.hpp"
 
-Client::Client() : _clientFD(-1), _nickname(""), _username(""), _actualGroup("#general"), _state(AWAITING_PASSWORD), _hasJoinedGeneral(false) {}
+Client::Client() : _clientFD(-1), _nickname(""), _username(""), _actualGroup("#general"), _pass(""), _state(AWAITING_PASSWORD), _hasJoinedGeneral(false) {}
 
-Client::Client(int clientFD) : _clientFD(clientFD), _nickname(""), _username(""), _actualGroup("#general") {}
+Client::Client(int clientFD): _clientFD(clientFD), _nickname(""), _username(""), _actualGroup("#general"), _pass(""), _state(AWAITING_PASSWORD), _hasJoinedGeneral(false) {}
 
 Client::~Client() {}
 
-Client::Client(const Client& other) 
-{
-    _clientFD = other._clientFD;
-    _nickname = other._nickname;
-    _username = other._username;
-    _actualGroup = other._actualGroup;
-}
+Client::Client(const Client& other)
+    : _clientFD(other._clientFD),
+      _nickname(other._nickname),
+      _username(other._username),
+      _actualGroup(other._actualGroup),
+      _pass(other._pass),
+      _state(other._state),
+      _hasJoinedGeneral(other._hasJoinedGeneral)
+{}
 
-Client& Client::operator=(const Client& other) 
+
+Client& Client::operator=(const Client& other)
 {
-    if (this != &other) 
+    if (this != &other)
     {
         _clientFD = other._clientFD;
         _nickname = other._nickname;
         _username = other._username;
         _actualGroup = other._actualGroup;
+        _pass = other._pass;
+        _state = other._state;
+        _hasJoinedGeneral = other._hasJoinedGeneral;
     }
-    return (*this);
+    return *this;
 }
+
 
 // Getters
 int Client::getClientFD() const                     { return _clientFD;     }

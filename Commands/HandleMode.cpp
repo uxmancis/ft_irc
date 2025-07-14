@@ -3,252 +3,145 @@
 #include <vector>
 #include <cstdlib>
 
+void sendModeMessage(Client& client, const std::string& channelName, const std::string& modeStr, PollManager& pollManager)
+{
+    std::string msg = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost MODE " + channelName + " " + modeStr + "\r\n";
+    Channel& channel = pollManager.getChannels()[channelName];
+    const std::vector<Client*>& users = channel.getRegularUsers();
+    std::vector<Client*>::const_iterator it;
+    for (it = users.begin(); it != users.end(); ++it)
+        send((*it)->getClientFD(), msg.c_str(), msg.size(), 0);
+}
+
 void HandleMODEi(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if (args[0][0] != '+' && args[0][0] != '-')
-    {
-        std::string error = "MODE no reconocido: " + args[0] + "\n";
-        send(fd, error.c_str(), error.size(), 0);
+    if (args.size() < 2 || (args[1] != "+i" && args[1] != "-i"))
         return;
-    }
+
     Client& client = pollManager.getClient(fd);
-    std::string clannelname = client.getActualGroup();
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
-    std::map<std::string, Channel>::iterator chIt;
-    for (chIt = channels.begin(); chIt != channels.end(); ++chIt)
-    {
-        if (chIt->first == clannelname)
-        {
-            Channel& chan = chIt->second;
-            if (args[0][0] == '+')
-            {
-                chan.setInviteOnly(true);
-                std::string msg = "El canal " + chan.getName() + " solo puede ser accesible por invitación.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            if (args[0][0] == '-')
-            {
-                chan.setInviteOnly(false);
-                std::string msg = "El canal " + chan.getName() + " es público (no hace falta invitación).\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            return;
-        }
-    }
+    Channel& channel = pollManager.getChannels()[args[0]];
+    channel.setInviteOnly(args[1] == "+i");
+    sendModeMessage(client, args[0], args[1], pollManager);
 }
 
 void HandleMODEt(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if (args[0][0] != '+' && args[0][0] != '-')
-    {
-        std::string error = "MODE no reconocido: " + args[0] + "\n";
-        send(fd, error.c_str(), error.size(), 0);
+    if (args.size() < 2 || (args[1] != "+t" && args[1] != "-t"))
         return;
-    }
+
     Client& client = pollManager.getClient(fd);
-    std::string clannelname = client.getActualGroup();
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
-    std::map<std::string, Channel>::iterator chIt;
-    for (chIt = channels.begin(); chIt != channels.end(); ++chIt)
-    {
-        if (chIt->first == clannelname)
-        {
-            Channel& chan = chIt->second;
-            if (args[0][0] == '+')
-            {
-                chan.setFreeTopic(true);
-                std::string msg = "El topic del canal " + chan.getName() + " solo puede ser editado por los administradores.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            if (args[0][0] == '-')
-            {
-                chan.setFreeTopic(false);
-                std::string msg = "El topic del canal " + chan.getName() + " puede ser cambiado por cualquier usuario.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            return;
-        }
-    }
+    Channel& channel = pollManager.getChannels()[args[0]];
+    channel.setFreeTopic(args[1] == "-t");
+    sendModeMessage(client, args[0], args[1], pollManager);
 }
 
 void HandleMODEk(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if ((args[0][0] == '+' && args.size() < 2) || (args[0][0] != '+' && args[0][0] != '-') || (args.size() >= 3)) 
-    {
-        std::string error = "MODE no reconocido: " + args[0] +  " contraseña\n";
-        send(fd, error.c_str(), error.size(), 0);
+    if ((args[1] == "+k" && args.size() < 3) || (args[1] == "-k" && args.size() != 2))
         return;
-    }
+
     Client& client = pollManager.getClient(fd);
-    std::string clannelname = client.getActualGroup();
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
-    std::map<std::string, Channel>::iterator chIt;
-    for (chIt = channels.begin(); chIt != channels.end(); ++chIt)
+    Channel& channel = pollManager.getChannels()[args[0]];
+
+    if (args[1] == "+k")
     {
-        if (chIt->first == clannelname)
-        {
-            Channel& chan = chIt->second;
-            if (args[0][0] == '+')
-            {
-                chan.setPrivate(true, args[1]);
-                std::string msg = "Ahora el canal " + chan.getName() + " es privado, solo se accede con contraseña.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            if (args[0][0] == '-')
-            {
-                chan.setPrivate(false, "");
-                std::string msg = "Ahora el canal " + chan.getName() + " es público.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            return;
-        }
+        channel.setPrivate(true, args[2]);
+        sendModeMessage(client, args[0], "+k", pollManager);
+    }
+    else
+    {
+        channel.setPrivate(false, "");
+        sendModeMessage(client, args[0], "-k", pollManager);
     }
 }
 
 void HandleMODEo(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if (args.size() != 2 || (args[0][0] != '+' && args[0][0] != '-')) 
-    {
-        std::string error = "MODE no reconocido: " + args[0] +  " usuario\n";
-        send(fd, error.c_str(), error.size(), 0);
+    std::cout << "target =" << args[1] << "channel_name = " << args[0] << std::endl;
+    if (args.size() != 3 || (args[1] != "+o" && args[1] != "-o"))
         return;
-    }
+
     Client& client = pollManager.getClient(fd);
-    std::string clannelname = client.getActualGroup();
-    Client* invited = NULL;
-    std::map<std::string, Channel>& chan = pollManager.getChannels();
-    std::vector<Client*> regular = chan[clannelname].getRegularUsers();
-    if (args[0][0] == '-')
-        regular = chan[clannelname].getAdmins();
-    for (size_t i = 0; i < regular.size(); i++)
+    Channel& channel = pollManager.getChannels()[args[0]];
+    std::map<int, Client>& clients = pollManager.getClients();
+
+    Client* target = NULL;
+    std::map<int, Client>::iterator it;
+    for (it = clients.begin(); it != clients.end(); ++it)
     {
-        if (regular[i]->getNickname() == args[1])
+        if (it->second.getNickname() == args[2])
         {
-            invited = regular[i];
+            target = &(it->second);
             break;
         }
     }
-    if (!invited)
-    {
-        std::string err = "Usuario no encontrado.\n";
-        send(fd, err.c_str(), err.size(), 0);
+
+    if (!target || !channel.hasUser(target))
         return;
-    }
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
-    std::map<std::string, Channel>::iterator chIt;
-    for (chIt = channels.begin(); chIt != channels.end(); ++chIt)
+
+    if (args[1] == "+o")
     {
-        if (chIt->first == clannelname)
-        {
-            Channel& chan = chIt->second;
-            if (args[0][0] == '+')
-            {
-                chan.addAdmin(invited);
-                chan.removeUser(invited);
-                std::string msg = "Ahora " + invited->getNickname() + " es administrador.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-                msg = client.getNickname() + " te ha añadido como administrador.\n" ;
-                send(invited->getClientFD(), msg.c_str(), msg.size(), 0);
-            }
-            if (args[0][0] == '-')
-            {
-                chan.removeAdmin(invited);
-                chan.addUser(invited);
-                chan.setPrivate(false, "");
-                std::string msg = invited->getNickname() + " ya no es administrador.\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-                msg = client.getNickname() + " te ha eliminado como administrador.\n";
-                send(invited->getClientFD(), msg.c_str(), msg.size(), 0);
-            }
-            return;
-        }
+        if (!channel.isAdmin(target))
+            channel.addAdmin(target);
     }
+    else
+    {
+        if (channel.isAdmin(target))
+            channel.removeAdmin(target);
+    }
+
+    sendModeMessage(client, args[0], args[1] + " " + args[2], pollManager);
 }
 
 void HandleMODEl(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if ((args[0][0] == '+' && args.size() < 2) || (args[0][0] == '-' && args.size() < 1)) 
-    {
-        std::string error = "MODE no reconocido: " + args[0] +  " numero de clientes\n";
-        send(fd, error.c_str(), error.size(), 0);
+    if ((args[1] == "+l" && args.size() != 3) || (args[1] == "-l" && args.size() != 2))
         return;
-    }
-    if (args[0][0] == '+' && std::atoi(args[1].c_str()) <= 0)
-    {
-        std::string error = "Numero de clientes no valido\n";
-        send(fd, error.c_str(), error.size(), 0);
-        return;
-    }
+
     Client& client = pollManager.getClient(fd);
-    std::string clannelname = client.getActualGroup();
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
-    std::map<std::string, Channel>::iterator chIt;
-    for (chIt = channels.begin(); chIt != channels.end(); ++chIt)
+    Channel& channel = pollManager.getChannels()[args[0]];
+
+    if (args[1] == "+l")
     {
-        if (chIt->first == clannelname)
-        {
-            Channel& chan = chIt->second;
-            if (args[0][0] == '+')
-            {
-                chan.setLimit(args[1]);
-                std::string msg = "Ahora el canal " + chan.getName() + " esta limitado a " + args[1] + " clientes\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            if (args[0][0] == '-')
-            {
-                chan.setLimit("");
-                std::string msg = "Ahora el canal no tiene limite de clientes\n";
-                send(fd, msg.c_str(), msg.size(), 0);
-            }
-            return;
-        }
+        channel.setLimit(args[2]);
+        sendModeMessage(client, args[0], "+l " + args[2], pollManager);
+    }
+    else
+    {
+        channel.setLimit("");
+        sendModeMessage(client, args[0], "-l", pollManager);
     }
 }
 
 void HandleMODE(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if (args.size() < 1)
-    {
-        std::string err = "Uso: /MODE <Opciones>\n";
-        send(fd, err.c_str(), err.size(), 0);
+    if (args.size() < 2 || args[0].empty() || args[0][0] != '#')
         return;
-    }
-    Client& sender = pollManager.getClient(fd);
-    const std::string& channelName = sender.getActualGroup();
+
+    Client& client = pollManager.getClient(fd);
+    const std::string& channelName = args[0];
     std::map<std::string, Channel>& channels = pollManager.getChannels();
+
     if (channels.count(channelName) == 0)
         return;
+
     Channel& channel = channels[channelName];
-    bool isAdmin = false;
-    const std::vector<Client*>& admins = channel.getAdmins();
-    for (size_t i = 0; i < admins.size(); ++i)
+    if (!channel.isAdmin(&client))
     {
-        if (admins[i]->getClientFD() == fd)
-        {
-            isAdmin = true;
-            break;
-        }
-    }
-    if (!isAdmin)
-    {
-        std::string err = "No eres administrador del canal.\n";
+        std::string err = ":irc.local 482 " + channelName + " :You're not a channel operator\r\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
-    if (args[0] == "+i" || args[0] == "-i")
+    
+    const std::string& mode = args[1];
+    if (mode == "+i" || mode == "-i")
         HandleMODEi(fd, args, pollManager);
-    else if (args[0] == "+t" || args[0] == "-t")
+    else if (mode == "+t" || mode == "-t")
         HandleMODEt(fd, args, pollManager);
-    else if (args[0] == "+k" || args[0] == "-k")
+    else if (mode == "+k" || mode == "-k")
         HandleMODEk(fd, args, pollManager);
-    else if (args[0] == "+o" || args[0] == "-o")
+    else if (mode == "+o" || mode == "-o")
         HandleMODEo(fd, args, pollManager);
-    else if (args[0] == "+l" || args[0] == "-l")
-        HandleMODEl(fd, args, pollManager);  
-    else
-    {
-        std::string error = "MODE no reconocido: " + args[0] + "\n";
-        send(fd, error.c_str(), error.size(), 0);
-    }
-    return;
+    else if (mode == "+l" || mode == "-l")
+        HandleMODEl(fd, args, pollManager);
 }

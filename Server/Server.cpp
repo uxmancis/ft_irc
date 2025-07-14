@@ -40,24 +40,23 @@ void Server::_setupSocket()
 {
     _serverFD = socket(AF_INET, SOCK_STREAM, 0);
     if (_serverFD < 0)
-        throw std::runtime_error("Error creando el socket");
-
+        throw std::runtime_error("Error creating socket");
     int opt = 1;
-    setsockopt(_serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
+    if (setsockopt(_serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+        throw std::runtime_error("Error setting socket options");
     sockaddr_in serverAddr;
+    std::memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(_port);
     serverAddr.sin_addr.s_addr = INADDR_ANY;
-
     if (bind(_serverFD, (sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
-        throw std::runtime_error("Error en bind");
-
+        throw std::runtime_error("Error binding socket");
     if (listen(_serverFD, SOMAXCONN) < 0)
-        throw std::runtime_error("Error en listen");
-
-    fcntl(_serverFD, F_SETFL, O_NONBLOCK);
+        throw std::runtime_error("Error listening on socket");
+    if (fcntl(_serverFD, F_SETFL, O_NONBLOCK) < 0)
+        throw std::runtime_error("Error setting non-blocking mode");
 }
+
 
 void Server::run() 
 {
