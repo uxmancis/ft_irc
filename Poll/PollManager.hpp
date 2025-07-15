@@ -14,7 +14,7 @@
 class PollManager 
 {
     public:
-        PollManager(int serverFD, const std::string& password);
+        PollManager(int serverFD, const std::string& password, const std::string& hostName);
         ~PollManager();
         PollManager(const PollManager& other);
         PollManager& operator=(const PollManager& other);
@@ -37,6 +37,7 @@ class PollManager
         std::vector<pollfd>                         _fds;
         std::map<int, Client>                       _clients;
         std::map<std::string, Channel>              _channels;
+        std::string                                 _hostName;
 };
 
 #endif

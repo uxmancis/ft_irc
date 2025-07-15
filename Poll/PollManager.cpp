@@ -10,7 +10,7 @@
 #include <csignal>
 #include <cerrno>
 
-PollManager::PollManager(int serverFD, const std::string& password) : _password(password), _serverFD(serverFD)
+PollManager::PollManager(int serverFD, const std::string& password, const std::string& hostName) : _password(password), _serverFD(serverFD), _hostName(hostName)
 {
     pollfd pfd;
     pfd.fd = _serverFD;
@@ -116,6 +116,7 @@ void PollManager::run()
     _channels["#general"] = Channel("#general", "", false, false);
 
     extern volatile sig_atomic_t g_running;
+    std::map<int, std::string> inputBuffers;  // buffer parcial por fd
 
     while (g_running)
     {
@@ -126,6 +127,7 @@ void PollManager::run()
                 continue;
             throw std::runtime_error("poll() failed");
         }
+
         for (size_t i = 0; i < _fds.size(); ++i)
         {
             if (_fds[i].revents & POLLIN)
@@ -142,17 +144,20 @@ void PollManager::run()
                     if (bytes <= 0)
                     {
                         removeClient(&_clients[fd]);
+                        inputBuffers.erase(fd);
                         --i;
                         continue;
                     }
+
                     buffer[bytes] = '\0';
-                    std::string input(buffer);
-                    std::istringstream iss(input);
-                    std::string line;
-                    while (std::getline(iss, line))
+                    inputBuffers[fd] += buffer;
+
+                    std::string& buf = inputBuffers[fd];
+                    size_t pos;
+                    while ((pos = buf.find("\r\n")) != std::string::npos)
                     {
-                        if (!line.empty() && line[line.length() - 1] == '\r')
-                            line.erase(line.length() - 1);
+                        std::string line = buf.substr(0, pos);
+                        buf.erase(0, pos + 2);
                         if (_clients.find(fd) == _clients.end())
                             break;
                         HandleCommands(fd, line, *this);
@@ -182,4 +187,5 @@ void PollManager::run()
     _fds.clear();
     _channels.clear();
 }
+
 

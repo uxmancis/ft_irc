@@ -9,14 +9,28 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
 {
     if (command.empty())
         return;
+
     std::istringstream iss(command);
     std::string cmd;
     iss >> cmd;
     std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::toupper);
     std::vector<std::string> args;
-    std::string arg;
-    while (iss >> arg)
-        args.push_back(arg);
+    std::string token;
+    bool trailing = false;
+    while (iss >> token)
+    {
+        if (!trailing && token[0] == ':')
+        {
+            trailing = true;
+            std::string rest;
+            std::getline(iss, rest);
+            token += rest;
+            args.push_back(token.substr(1));
+            break;
+        }
+        args.push_back(token);
+    }
+    std::cout << cmd << std::endl;
     if (cmd == "PASS")
         HandlePASS(fd, args, pollManager);
     else if (cmd == "NICK")
@@ -41,6 +55,8 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         HandleWHO(fd, args, pollManager);
     else if (cmd == "PING")
         HandlePING(fd, args);
+    else if (cmd == "PONG")
+        HandlePONG(fd, args);
     else if (cmd == "PART")
         HandlePART(fd, args, pollManager);
     else if (cmd == "NAMES")
@@ -49,8 +65,6 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         HandleLIST(fd, args, pollManager);
     else if (cmd == "NOTICE")
         HandleNOTICE(fd, args, pollManager);
-   else if (cmd == "PONG")
-        HandlePONG(fd);
     else if (cmd == "WHOIS")
         HandleWHOIS(fd, args, pollManager);
     else if (cmd == "MOTD")
@@ -59,7 +73,7 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         HandleISON(fd, args, pollManager);
     else
     {
-        std::string err = ":irc.local 421 " + command + " :Unknown command\r\n";
+        std::string err = ":irc.local 421 " + cmd + " :Unknown command\r\n";
         send(fd, err.c_str(), err.size(), 0);
     }
 }

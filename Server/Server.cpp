@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <string.h>
 
 Server::Server(int port, const std::string& password) : _serverFD(-1), _password(password), _port(port) 
 {
@@ -61,6 +62,15 @@ void Server::_setupSocket()
 void Server::run() 
 {
     std::cout << "Servidor iniciado en el puerto " << _port << std::endl;
-    PollManager pollManager(_serverFD, _password);
+
+    char hostname[256];
+    std::string host;
+    
+    if (gethostname(hostname, sizeof(hostname)) == 0)
+        host = hostname;
+    else
+        host = "irc.local";
+    PollManager pollManager(_serverFD, _password, host);
     pollManager.run();
 }
+
