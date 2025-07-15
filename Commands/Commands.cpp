@@ -61,6 +61,5 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
     {
         std::string err = ":irc.local 421 " + command + " :Unknown command\r\n";
         send(fd, err.c_str(), err.size(), 0);
-        std::cout << command << std::endl;
     }
 }

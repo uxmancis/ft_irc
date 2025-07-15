@@ -5,41 +5,23 @@
 
 void HandleISON(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    Client& client = pollManager.getClient(fd);
-    std::string nick = client.getNickname();
-
     if (args.empty())
-    {
-        std::string err = ":irc.local 461 " + nick + " ISON :Not enough parameters\r\n";
-        send(fd, err.c_str(), err.size(), 0);
         return;
-    }
-
-    const std::map<int, Client>& clients = pollManager.getClients();
-    std::string onlineNicks;
-    std::string rawNicks;
+    std::string result;
     for (size_t i = 0; i < args.size(); ++i)
     {
-        if (i > 0) rawNicks += " ";
-        rawNicks += args[i];
-    }
-
-    std::istringstream iss(rawNicks);
-    std::string nickToCheck;
-    while (iss >> nickToCheck)
-    {
-        for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+        for (std::map<int, Client>::const_iterator it = pollManager.getClients().begin(); it != pollManager.getClients().end(); ++it)
         {
-            if (it->second.getNickname() == nickToCheck)
+            if (it->second.getNickname() == args[i])
             {
-                if (!onlineNicks.empty())
-                    onlineNicks += " ";
-                onlineNicks += nickToCheck;
+                if (!result.empty())
+                    result += " ";
+                result += args[i];
                 break;
             }
         }
     }
-
-    std::string reply = ":irc.local 303 " + nick + " :" + onlineNicks + "\r\n";
-    send(fd, reply.c_str(), reply.size(), 0);
+    Client& client = pollManager.getClient(fd);
+    std::string response = ":irc.local 303 " + client.getNickname() + " :" + result + "\r\n";
+    send(fd, response.c_str(), response.size(), 0);
 }
