@@ -5,6 +5,8 @@
 # include <string>
 # include <map>
 # include <poll.h>
+# include <ctime>
+
 
 enum ClientState 
 {
@@ -17,30 +19,27 @@ enum ClientState
 class Client 
 {
     public:
-        Client();                          // Default constructor
-        Client(int clientFD);              // Constructor con el FD
-        ~Client();                         // Destructor
+        Client();
+        Client(int clientFD);
+        ~Client();
 
-        Client(const Client& other);       // Copy constructor
-        Client& operator=(const Client&);  // Copy assignment
+        Client(const Client& other);
+        Client& operator=(const Client&);
 
-        // Getters
         int                 getClientFD() const;
         const std::string&  getNickname() const;
         const std::string&  getUsername() const;
         const std::string&  getActualGroup() const;
         const std::string&  getPassword() const;
         ClientState         getState() const;
+        bool                hasJoinedGeneral() const;
 
-        // Setters
         void                setNickname(const std::string& nickname);
         void                setUsername(const std::string& username);
         void                setActualGroup(const std::string& group);
         void                setPassword(const std::string& pass);
         void                setState(ClientState state);
-
-        bool hasJoinedGeneral() const;
-        void setJoinedGeneral(bool value);
+        void                setJoinedGeneral(bool value);
 
     private:
         int             _clientFD;

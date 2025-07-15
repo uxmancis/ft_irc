@@ -35,6 +35,7 @@ void HandleNOTICE(int fd, const std::vector<std::string>& args, PollManager& pol
 void HandlePONG(int fd);
 void HandleWHOIS(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleMOTD(int fd, PollManager& pollManager);
+void HandleISON(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 
 
 #endif

@@ -37,7 +37,7 @@ void HandleMODEt(int fd, const std::vector<std::string>& args, PollManager& poll
 
 void HandleMODEk(int fd, const std::vector<std::string>& args, PollManager& pollManager)
 {
-    if ((args[1] == "+k" && args.size() < 3) || (args[1] == "-k" && args.size() != 2))
+    if ((args[1] == "+k" && args.size() != 3) || (args[1] == "-k" && args.size() != 3))
         return;
 
     Client& client = pollManager.getClient(fd);
@@ -48,7 +48,7 @@ void HandleMODEk(int fd, const std::vector<std::string>& args, PollManager& poll
         channel.setPrivate(true, args[2]);
         sendModeMessage(client, args[0], "+k", pollManager);
     }
-    else
+    else if (args[2] == channel.getPassword())
     {
         channel.setPrivate(false, "");
         sendModeMessage(client, args[0], "-k", pollManager);

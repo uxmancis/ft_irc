@@ -28,6 +28,8 @@ SRC		=	main.cpp						\
 			Commands/HandlePong.cpp 		\
 			Commands/HandleWhois.cpp 		\
 			Commands/HandleMotd.cpp 		\
+			Commands/HandleIson.cpp 		\
+
 
 
 OBJS	=	$(SRC:.cpp=.o)

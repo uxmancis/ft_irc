@@ -49,15 +49,18 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         HandleLIST(fd, args, pollManager);
     else if (cmd == "NOTICE")
         HandleNOTICE(fd, args, pollManager);
-    else if (cmd == "PONG")
+   else if (cmd == "PONG")
         HandlePONG(fd);
     else if (cmd == "WHOIS")
         HandleWHOIS(fd, args, pollManager);
     else if (cmd == "MOTD")
         HandleMOTD(fd, pollManager);
+    else if (cmd == "ISON")
+        HandleISON(fd, args, pollManager);
     else
     {
         std::string err = ":irc.local 421 " + command + " :Unknown command\r\n";
         send(fd, err.c_str(), err.size(), 0);
+        std::cout << command << std::endl;
     }
 }

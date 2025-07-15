@@ -2,18 +2,16 @@
 #include "iostream"
 #include "sys/socket.h"
 
-Channel::Channel() 
-    : _name(""), _pass(""), _private(false), _invite(false), _topic("none") {}
+Channel::Channel()  : _name(""), _pass(""), _private(false), _freetopic(true), _invite(false), _topic("none"), _limit("") {}
 
-Channel::Channel(std::string channelName, std::string pass, bool priv, bool invite)
-    : _name(channelName), _pass(pass), _private(priv), _invite(invite), _topic("none"), _limit("") {}
+Channel::Channel(std::string channelName, std::string pass, bool priv, bool invite): _name(channelName), _pass(pass), _private(priv), _freetopic(true), _invite(invite), _topic("none"), _limit("") {}
 
 Channel::Channel(const Channel& other)
 {
     _name = other._name;
     _pass = other._pass;
-    _topic = other._topic;
     _private = other._private;
+    _freetopic = other._freetopic;
     _invite = other._invite;
     _adminUsers = other._adminUsers;
     _regularUsers = other._regularUsers;
@@ -27,8 +25,8 @@ Channel& Channel::operator=(const Channel& other)
     {
         _name = other._name;
         _pass = other._pass;
-        _topic = other._topic;
         _private = other._private;
+        _freetopic = other._freetopic;
         _invite = other._invite;
         _adminUsers = other._adminUsers;
         _regularUsers = other._regularUsers;

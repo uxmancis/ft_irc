@@ -163,6 +163,7 @@ void PollManager::run()
                             client.setState(READY);
                         if (client.getState() == READY && !client.hasJoinedGeneral())
                         {
+                            HandleMOTD(fd, *this);
                             std::string welcome = ":irc.local 001 " + client.getNickname() + " :Welcome to the IRC server, " + client.getNickname() + "\r\n";
                             send(fd, welcome.c_str(), welcome.size(), 0);
                             std::vector<std::string> args;
