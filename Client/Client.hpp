@@ -40,6 +40,7 @@ class Client
         void                setPassword(const std::string& pass);
         void                setState(ClientState state);
         void                setJoinedGeneral(bool value);
+        //
 
     private:
         int             _clientFD;
@@ -49,6 +50,9 @@ class Client
         std::string     _pass;
         ClientState     _state;
         bool            _hasJoinedGeneral;
+    public:
+        time_t              _previousPING;
+        bool                _receivedPONG;
 
 };
 

@@ -3,13 +3,13 @@
 #include <vector>
 #include <ctype.h>
 #include <algorithm>
+#include <signal.h>
 
 
 void HandleCommands(int fd, const std::string& command, PollManager& pollManager)
 {
     if (command.empty())
         return;
-
     std::istringstream iss(command);
     std::string cmd;
     iss >> cmd;
@@ -30,7 +30,7 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         }
         args.push_back(token);
     }
-    std::cout << cmd << std::endl;
+    std::cout << "---------- Command: " << cmd << args[0] << std::endl;
     if (cmd == "PASS")
         HandlePASS(fd, args, pollManager);
     else if (cmd == "NICK")
@@ -54,9 +54,9 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
     else if (cmd == "WHO")
         HandleWHO(fd, args, pollManager);
     else if (cmd == "PING")
-        HandlePING(fd, args);
+        HandlePING(fd, args, pollManager);
     else if (cmd == "PONG")
-        HandlePONG(fd, args);
+        HandlePONG(fd, pollManager);
     else if (cmd == "PART")
         HandlePART(fd, args, pollManager);
     else if (cmd == "NAMES")

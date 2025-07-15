@@ -27,12 +27,12 @@ void HandleTOPIC(int fd, const std::vector<std::string>& args, PollManager& poll
 void HandleMSG(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleMODE(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleWHO(int fd, const std::vector<std::string>& args, PollManager& pollManager);
-void HandlePING(int fd, const std::vector<std::string>& args);
+void HandlePING(int fd, const std::vector<std::string>& args, PollManager& pollManager);
+void HandlePONG(int fd, PollManager& pollManager);
 void HandlePART(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleNAMES(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleLIST(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleNOTICE(int fd, const std::vector<std::string>& args, PollManager& pollManager);
-void HandlePONG(int fd, const std::vector<std::string>& args);
 void HandleWHOIS(int fd, const std::vector<std::string>& args, PollManager& pollManager);
 void HandleMOTD(int fd, PollManager& pollManager);
 void HandleISON(int fd, const std::vector<std::string>& args, PollManager& pollManager);

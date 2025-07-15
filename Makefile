@@ -1,7 +1,7 @@
 NAME	=	ircserv
 
 CC		=	g++
-FLAGS	=	-Wall -Wextra -Werror -std=c++98
+FLAGS	=	-Wall -Wextra  -std=c++98
 
 SRC		=	main.cpp						\
 			Server/Server.cpp 				\
@@ -21,11 +21,11 @@ SRC		=	main.cpp						\
 			Commands/HandlePass.cpp 		\
 			Commands/HandleWho.cpp 			\
 			Commands/HandlePing.cpp 		\
+			Commands/HandlePong.cpp 		\
 			Commands/HandlePart.cpp 		\
 			Commands/HandleNames.cpp 		\
 			Commands/HandleList.cpp 		\
 			Commands/HandleNotice.cpp 		\
-			Commands/HandlePong.cpp 		\
 			Commands/HandleWhois.cpp 		\
 			Commands/HandleMotd.cpp 		\
 			Commands/HandleIson.cpp 		\

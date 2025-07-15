@@ -117,7 +117,6 @@ void PollManager::run()
 
     extern volatile sig_atomic_t g_running;
     std::map<int, std::string> inputBuffers;  // buffer parcial por fd
-
     while (g_running)
     {
         int poll_count = poll(&_fds[0], _fds.size(), 1000);
@@ -128,10 +127,12 @@ void PollManager::run()
             throw std::runtime_error("poll() failed");
         }
 
+        std::cout << CYAN "----------- This are current fds: --------------- " RESET << std::endl;
         for (size_t i = 0; i < _fds.size(); ++i)
         {
             if (_fds[i].revents & POLLIN)
             {
+                std::cout << _fds[i].fd << std::endl;
                 if (_fds[i].fd == _serverFD)
                 {
                     acceptNewClient();
@@ -177,6 +178,38 @@ void PollManager::run()
                         }
                     }
                 }
+            }
+            std::map<int, Client>& clients = this->getClients();
+            std::map<int, Client>::iterator it;
+            std::vector<std::string> args2;
+            time_t current_time = time(NULL);
+
+            for (it = clients.begin(); it != clients.end(); ++it)
+            {
+                if (it->second._previousPING == -1) //Si nunca antes hemos hecho un PING
+                {
+                    HandlePING(it->second.getClientFD(), args2, *this); //Hagamos PING por 1era vez y apuntamos hora it->second._previousPING
+                    std::cout << YELLOW << "1st PING!!! [fd = " << it->second.getClientFD() << "] " RESET << std::endl; 
+                } 
+                else
+                {
+                    time_t diff = current_time - it->second._previousPING;
+                    if (diff >= 10) // 10 refleja 10 segundos de diferencia que sí permitimos. Si sí han pasado 10 segundos, vuelvo a hacer lo mío...
+                    {
+                        std::cout << CYAN "POLICÍA [fd = " << it->second.getClientFD() << "] " RESET << current_time << std::endl;
+                        if(it->second._receivedPONG == false) //#1 si en este tiempo no he recibido PONG, agur --> HandleQUIT
+                        {
+                            HandleQUIT(it->second.getClientFD(), *this);
+                            break;
+                        }
+                        else
+                        {
+                            it->second._receivedPONG = false;
+                            HandlePING(it->second.getClientFD(), args2, *this);
+                        }
+                    }
+                }
+
             }
         }
     }

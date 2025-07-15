@@ -13,6 +13,14 @@ void handleSigint(int signum)
     g_running = 0;
 }
 
+// void handleSigint2(int signum)
+// {
+//     (void)signum;
+//     std::cout << "\n[INFO] SIGINT received (Ctrl+Z). Shutting down client...\n";
+//     sle
+//     g_running = 0;
+// }
+
 int main(int argc, char** argv)
 {
     if (argc != 3) 
@@ -27,7 +35,7 @@ int main(int argc, char** argv)
         return 1;
     }
     signal(SIGINT, handleSigint);
-
+    // signal(SIGTSTP, handleSigint2);
     try
     {
         Server server(port, argv[2]);
