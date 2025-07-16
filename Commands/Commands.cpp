@@ -53,12 +53,20 @@ void Commands::handleCommand(int fd, const std::string &command, PollManager &po
 {
     if (command.empty())
         return;
+
     std::istringstream iss(command);
     std::string cmd;
     iss >> cmd;
     cmd = toUpperCase(cmd);
     std::vector<std::string> args = parseArguments(command);
-    // std::cout << "---------- Command: " << cmd << args[0] << std::endl;
+
+    Client &client = pollManager.getClient(fd);
+    if (client.getState() == AWAITING_PASSWORD && cmd != "PASS" && cmd != "QUIT" && cmd != "PING" && cmd != "PONG")
+    {
+        std::string err = ":" + pollManager.getHostname() + " 464 :Password Password required\r\n";
+        send(fd, err.c_str(), err.size(), 0);
+        return;
+    }
     if (cmd == "PASS")
         handlePASS(fd, args, pollManager);
     else if (cmd == "NICK")

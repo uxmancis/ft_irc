@@ -22,6 +22,7 @@ void Commands::handlePASS(int fd, const std::vector<std::string> &args, PollMana
             pollManager.removeClient(&client);
             return;
         }
+        client.setState(AWAITING_NICKNAME);
         client.setPassword(providedPass);
     }
 }
