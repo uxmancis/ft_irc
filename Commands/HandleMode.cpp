@@ -3,45 +3,45 @@
 #include <vector>
 #include <cstdlib>
 
-void sendModeMessage(Client& client, const std::string& channelName, const std::string& modeStr, PollManager& pollManager)
+void sendModeMessage(Client &client, const std::string &channelName, const std::string &modeStr, PollManager &pollManager)
 {
-    std::string msg = ":" + client.getNickname() + "!" + client.getUsername() + "@localhost MODE " + channelName + " " + modeStr + "\r\n";
-    Channel& channel = pollManager.getChannels()[channelName];
-    const std::vector<Client*>& users = channel.getRegularUsers();
-    std::vector<Client*>::const_iterator it;
+    std::string msg = ":" + client.getNickname() + "!" + client.getUsername() + "@" + pollManager.getHostname() + " MODE " + channelName + " " + modeStr + "\r\n";
+    Channel &channel = pollManager.getChannels()[channelName];
+    const std::vector<Client *> &users = channel.getRegularUsers();
+    std::vector<Client *>::const_iterator it;
     for (it = users.begin(); it != users.end(); ++it)
         send((*it)->getClientFD(), msg.c_str(), msg.size(), 0);
 }
 
-void HandleMODEi(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void HandleMODEi(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
     if (args.size() < 2 || (args[1] != "+i" && args[1] != "-i"))
         return;
 
-    Client& client = pollManager.getClient(fd);
-    Channel& channel = pollManager.getChannels()[args[0]];
+    Client &client = pollManager.getClient(fd);
+    Channel &channel = pollManager.getChannels()[args[0]];
     channel.setInviteOnly(args[1] == "+i");
     sendModeMessage(client, args[0], args[1], pollManager);
 }
 
-void HandleMODEt(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void HandleMODEt(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
     if (args.size() < 2 || (args[1] != "+t" && args[1] != "-t"))
         return;
 
-    Client& client = pollManager.getClient(fd);
-    Channel& channel = pollManager.getChannels()[args[0]];
+    Client &client = pollManager.getClient(fd);
+    Channel &channel = pollManager.getChannels()[args[0]];
     channel.setFreeTopic(args[1] == "-t");
     sendModeMessage(client, args[0], args[1], pollManager);
 }
 
-void HandleMODEk(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void HandleMODEk(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
     if ((args[1] == "+k" && args.size() != 3) || (args[1] == "-k" && args.size() != 3))
         return;
 
-    Client& client = pollManager.getClient(fd);
-    Channel& channel = pollManager.getChannels()[args[0]];
+    Client &client = pollManager.getClient(fd);
+    Channel &channel = pollManager.getChannels()[args[0]];
 
     if (args[1] == "+k")
     {
@@ -55,17 +55,16 @@ void HandleMODEk(int fd, const std::vector<std::string>& args, PollManager& poll
     }
 }
 
-void HandleMODEo(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void HandleMODEo(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
-    std::cout << "target =" << args[1] << "channel_name = " << args[0] << std::endl;
     if (args.size() != 3 || (args[1] != "+o" && args[1] != "-o"))
         return;
 
-    Client& client = pollManager.getClient(fd);
-    Channel& channel = pollManager.getChannels()[args[0]];
-    std::map<int, Client>& clients = pollManager.getClients();
+    Client &client = pollManager.getClient(fd);
+    Channel &channel = pollManager.getChannels()[args[0]];
+    std::map<int, Client> &clients = pollManager.getClients();
 
-    Client* target = NULL;
+    Client *target = NULL;
     std::map<int, Client>::iterator it;
     for (it = clients.begin(); it != clients.end(); ++it)
     {
@@ -93,13 +92,13 @@ void HandleMODEo(int fd, const std::vector<std::string>& args, PollManager& poll
     sendModeMessage(client, args[0], args[1] + " " + args[2], pollManager);
 }
 
-void HandleMODEl(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void HandleMODEl(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
     if ((args[1] == "+l" && args.size() != 3) || (args[1] == "-l" && args.size() != 2))
         return;
 
-    Client& client = pollManager.getClient(fd);
-    Channel& channel = pollManager.getChannels()[args[0]];
+    Client &client = pollManager.getClient(fd);
+    Channel &channel = pollManager.getChannels()[args[0]];
 
     if (args[1] == "+l")
     {
@@ -113,27 +112,27 @@ void HandleMODEl(int fd, const std::vector<std::string>& args, PollManager& poll
     }
 }
 
-void HandleMODE(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void Commands::handleMODE(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
     if (args.size() < 2 || args[0].empty() || args[0][0] != '#')
         return;
 
-    Client& client = pollManager.getClient(fd);
-    const std::string& channelName = args[0];
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
+    Client &client = pollManager.getClient(fd);
+    const std::string &channelName = args[0];
+    std::map<std::string, Channel> &channels = pollManager.getChannels();
 
     if (channels.count(channelName) == 0)
         return;
 
-    Channel& channel = channels[channelName];
+    Channel &channel = channels[channelName];
     if (!channel.isAdmin(&client))
     {
-        std::string err = ":irc.local 482 " + channelName + " :You're not a channel operator\r\n";
+        std::string err = ":" + pollManager.getHostname() + " 482 " + channelName + " :You're not a channel operator\r\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }
-    
-    const std::string& mode = args[1];
+
+    const std::string &mode = args[1];
     if (mode == "+i" || mode == "-i")
         HandleMODEi(fd, args, pollManager);
     else if (mode == "+t" || mode == "-t")

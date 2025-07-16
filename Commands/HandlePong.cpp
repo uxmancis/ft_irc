@@ -2,9 +2,8 @@
 #include <sstream>
 #include <vector>
 
-
-void HandlePONG(int fd, PollManager &pollManager)
+void Commands::handlePONG(int fd, PollManager &pollManager) 
 {
-    std::cout << RED "RECEIVED PONG [fd = " << fd << "] " RESET << std::endl;
-   pollManager.getClient(fd)._receivedPONG = true;
+    // std::cout << RED "RECEIVED PONG [fd = " << fd << "] " RESET << std::endl;
+    pollManager.getClient(fd)._receivedPONG = true;
 }

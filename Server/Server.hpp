@@ -3,6 +3,8 @@
 
 # include <string>
 
+#define MAX_HOSTNAME_LENGTH 256
+
 class Server 
 {
     public:
@@ -11,14 +13,13 @@ class Server
         Server(const Server& other);
         Server& operator=(const Server& other);
 
-        void run();
+        void            run();
 
     private:
-        int         _serverFD;
-        std::string _password;
-        int         _port;
-
-        void        _setupSocket();
+        int             _serverFD;
+        std::string     _password;
+        int             _port;
+        void            _setupSocket();
 };
 
 #endif

@@ -2,13 +2,13 @@
 #include <sstream>
 #include <vector>
 
-void HandleUSER(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void Commands::handleUSER(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
-    Client& client = pollManager.getClient(fd);
+    Client &client = pollManager.getClient(fd);
 
     if (args.size() < 4)
     {
-        std::string err = ":irc.local 461 * USER :Not enough parameters\r\n";
+        std::string err = ":" + pollManager.getHostname() + " 461 * USER :Not enough parameters\r\n";
         send(fd, err.c_str(), err.size(), 0);
         return;
     }

@@ -1,4 +1,5 @@
 #include "PollManager.hpp"
+#include "../Commands/Commands.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
@@ -10,7 +11,7 @@
 #include <csignal>
 #include <cerrno>
 
-PollManager::PollManager(int serverFD, const std::string& password, const std::string& hostName) : _password(password), _serverFD(serverFD), _hostName(hostName)
+PollManager::PollManager(int serverFD, const std::string &password, const std::string &host) : _serverFD(serverFD), _password(password), _hostname(host)
 {
     pollfd pfd;
     pfd.fd = _serverFD;
@@ -18,44 +19,45 @@ PollManager::PollManager(int serverFD, const std::string& password, const std::s
     _fds.push_back(pfd);
 }
 
-PollManager::~PollManager() {}
+PollManager::PollManager(const PollManager &other) : _serverFD(other._serverFD), _password(other._password), _hostname(other._hostname) {}
 
-PollManager::PollManager(const PollManager& other) : _password(other._password), _serverFD(other._serverFD), _fds(other._fds) {}
-
-PollManager& PollManager::operator=(const PollManager& other)
+PollManager &PollManager::operator=(const PollManager &other)
 {
     if (this != &other)
     {
-        _password = other._password;
         _serverFD = other._serverFD;
-        _fds = other._fds;
+        _password = other._password;
+        _hostname = other._hostname;
     }
     return (*this);
 }
 
-const std::string& PollManager::getPassword() const { return (_password); }
+PollManager::~PollManager() {}
 
-std::vector<pollfd>& PollManager::getFDs() { return (_fds); }
+const std::string &PollManager::getPassword() const { return (_password); }
+const std::string &PollManager::getHostname() const { return (_hostname); }
+
+std::vector<pollfd> &PollManager::getFDs() { return (_fds); }
 
 int PollManager::getServerFD() const { return (_serverFD); }
 
-Client& PollManager::getClient(int fd) { return _clients.at(fd); }
+Client &PollManager::getClient(int fd) { return _clients.at(fd); }
 
-std::map<std::string, Channel>& PollManager::getChannels() { return _channels; }
+std::map<std::string, Channel> &PollManager::getChannels() { return _channels; }
 
-std::map<int, Client>& PollManager::getClients() { return _clients; }
+std::map<int, Client> &PollManager::getClients() { return _clients; }
 
-void PollManager::removeClient(Client* client)
+void PollManager::removeClient(Client *client)
 {
     int fd = client->getClientFD();
-    std::map<std::string, Channel>& channels = getChannels();
+    std::map<std::string, Channel> &channels = getChannels();
     std::map<std::string, Channel>::iterator it;
     for (it = channels.begin(); it != channels.end(); ++it)
     {
         it->second.removeUser(client);
         it->second.removeAdmin(client);
     }
-    std::vector<pollfd>& fds = getFDs();
+    std::vector<pollfd> &fds = getFDs();
     for (size_t i = 0; i < fds.size(); ++i)
     {
         if (fds[i].fd == fd)
@@ -64,7 +66,8 @@ void PollManager::removeClient(Client* client)
             break;
         }
     }
-    std::cout << YELLOW << "[INFO] Client disconnected: " << fd << std::endl << RESET;
+    std::cout << YELLOW << "[INFO] Client disconnected: " << fd << std::endl
+              << RESET;
     close(fd);
     _clients.erase(fd);
 }
@@ -73,15 +76,15 @@ void PollManager::acceptNewClient()
 {
     sockaddr_in clientAddr;
     socklen_t addrLen = sizeof(clientAddr);
-    int clientFD = accept(_serverFD, (sockaddr*)&clientAddr, &addrLen);
+    int clientFD = accept(_serverFD, (sockaddr *)&clientAddr, &addrLen);
     if (clientFD < 0)
     {
-        std::cerr << "Error accepting client" << std::endl;
+        std::cerr << RED << "[ERROR] Failed to accept client: " << strerror(errno) << RESET << std::endl;
         return;
     }
     if (fcntl(clientFD, F_SETFL, O_NONBLOCK) < 0)
     {
-        std::cerr << "Error setting client socket to non-blocking" << std::endl;
+        std::cerr << RED << "[ERROR] Failed setting client socket to non-blocking" << strerror(errno) << RESET << std::endl;
         close(clientFD);
         return;
     }
@@ -94,29 +97,13 @@ void PollManager::acceptNewClient()
     _fds.push_back(pfd);
 }
 
-std::string PollManager::requestInput(int clientFD, const std::string& prompt)
-{
-    send(clientFD, prompt.c_str(), prompt.size(), 0);
-    char buffer[512];
-    int bytes = recv(clientFD, buffer, sizeof(buffer) - 1, 0);
-    if (bytes <= 0)
-        return "";
-    buffer[bytes] = '\0';
-    std::string str(buffer);
-    if (!str.empty() && str[str.length() - 1] == '\n')
-        str.erase(str.length() - 1);
-    if (!str.empty() && str[str.length() - 1] == '\r')
-        str.erase(str.length() - 1);
-    return (str);
-}
-
 void PollManager::run()
 {
     std::cout << GREEN << "[SERVER] Waiting for connections..." << RESET << std::endl;
     _channels["#general"] = Channel("#general", "", false, false);
-
+    Commands commands;
     extern volatile sig_atomic_t g_running;
-    std::map<int, std::string> inputBuffers;  // buffer parcial por fd
+    std::map<int, std::string> inputBuffers; // buffer parcial por fd
     while (g_running)
     {
         int poll_count = poll(&_fds[0], _fds.size(), 1000);
@@ -124,15 +111,15 @@ void PollManager::run()
         {
             if (errno == EINTR)
                 continue;
-            throw std::runtime_error("poll() failed");
+            throw std::runtime_error("Poll failed: " + std::string(strerror(errno)));
         }
 
-        std::cout << CYAN "----------- This are current fds: --------------- " RESET << std::endl;
+        // std::cout << CYAN "----------- This are current fds: --------------- " RESET << std::endl;
         for (size_t i = 0; i < _fds.size(); ++i)
         {
             if (_fds[i].revents & POLLIN)
             {
-                std::cout << _fds[i].fd << std::endl;
+                // std::cout << _fds[i].fd << std::endl;
                 if (_fds[i].fd == _serverFD)
                 {
                     acceptNewClient();
@@ -140,7 +127,7 @@ void PollManager::run()
                 else
                 {
                     int fd = _fds[i].fd;
-                    char buffer[512];
+                    char buffer[BUFFER_SIZE];
                     int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
                     if (bytes <= 0)
                     {
@@ -153,7 +140,7 @@ void PollManager::run()
                     buffer[bytes] = '\0';
                     inputBuffers[fd] += buffer;
 
-                    std::string& buf = inputBuffers[fd];
+                    std::string &buf = inputBuffers[fd];
                     size_t pos;
                     while ((pos = buf.find("\r\n")) != std::string::npos)
                     {
@@ -161,55 +148,54 @@ void PollManager::run()
                         buf.erase(0, pos + 2);
                         if (_clients.find(fd) == _clients.end())
                             break;
-                        HandleCommands(fd, line, *this);
+                        commands.handleCommand(fd, line, *this);
                         if (_clients.find(fd) == _clients.end())
                             break;
-                        Client& client = _clients[fd];
+                        Client &client = _clients[fd];
                         if (!client.getNickname().empty() && !client.getUsername().empty() && client.getState() != READY)
                             client.setState(READY);
                         if (client.getState() == READY && !client.hasJoinedGeneral())
                         {
-                            HandleMOTD(fd, *this);
+                            commands.handleMOTD(fd, *this);
                             std::vector<std::string> args;
                             args.push_back("#general");
-                            HandleJOIN(fd, args, *this);
-                            std::cout << GREEN << "[SERVER] Client connected on FD " << fd << std::endl << RESET;
+                            commands.handleJOIN(fd, args, *this);
+                            std::cout << GREEN << "[SERVER] Client connected on FD " << fd << std::endl
+                                      << RESET;
                             client.setJoinedGeneral(true);
                         }
                     }
                 }
             }
-            std::map<int, Client>& clients = this->getClients();
+            std::map<int, Client> &clients = this->getClients();
             std::map<int, Client>::iterator it;
             std::vector<std::string> args2;
             time_t current_time = time(NULL);
-
             for (it = clients.begin(); it != clients.end(); ++it)
             {
-                if (it->second._previousPING == -1) //Si nunca antes hemos hecho un PING
+                if (it->second._previousPING == -1) // Si nunca antes hemos hecho un PING
                 {
-                    HandlePING(it->second.getClientFD(), args2, *this); //Hagamos PING por 1era vez y apuntamos hora it->second._previousPING
-                    std::cout << YELLOW << "1st PING!!! [fd = " << it->second.getClientFD() << "] " RESET << std::endl; 
-                } 
+                    commands.handlePING(it->second.getClientFD(), args2, *this); // Hagamos PING por 1era vez y apuntamos hora it->second._previousPING
+                    // std::cout << YELLOW << "1st PING!!! [fd = " << it->second.getClientFD() << "] " RESET << std::endl;
+                }
                 else
                 {
                     time_t diff = current_time - it->second._previousPING;
-                    if (diff >= 10) // 10 refleja 10 segundos de diferencia que sí permitimos. Si sí han pasado 10 segundos, vuelvo a hacer lo mío...
+                    if (diff >= PING_TIMEOUT) // 10 refleja 10 segundos de diferencia que sí permitimos. Si sí han pasado 10 segundos, vuelvo a hacer lo mío...
                     {
-                        std::cout << CYAN "POLICÍA [fd = " << it->second.getClientFD() << "] " RESET << current_time << std::endl;
-                        if(it->second._receivedPONG == false) //#1 si en este tiempo no he recibido PONG, agur --> HandleQUIT
+                        // std::cout << CYAN "POLICÍA [fd = " << it->second.getClientFD() << "] " RESET << current_time << std::endl;
+                        if (it->second._receivedPONG == false) // #1 si en este tiempo no he recibido PONG, agur --> HandleQUIT
                         {
-                            HandleQUIT(it->second.getClientFD(), *this);
+                            commands.handleQUIT(it->second.getClientFD(), *this);
                             break;
                         }
                         else
                         {
                             it->second._receivedPONG = false;
-                            HandlePING(it->second.getClientFD(), args2, *this);
+                            commands.handlePING(it->second.getClientFD(), args2, *this);
                         }
                     }
                 }
-
             }
         }
     }
@@ -220,5 +206,3 @@ void PollManager::run()
     _fds.clear();
     _channels.clear();
 }
-
-

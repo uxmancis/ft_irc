@@ -1,22 +1,31 @@
 #include "Commands.hpp"
+#include "../Poll/PollManager.hpp"
 #include <sstream>
 #include <vector>
 #include <ctype.h>
 #include <algorithm>
 #include <signal.h>
 
+// Orthodox Canonical Form Implementation
+Commands::Commands() {}
 
-void HandleCommands(int fd, const std::string& command, PollManager& pollManager)
+Commands::Commands(const Commands &other) { (void)other; }
+
+Commands &Commands::operator=(const Commands &other)
 {
-    if (command.empty())
-        return;
-    std::istringstream iss(command);
-    std::string cmd;
-    iss >> cmd;
-    std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::toupper);
+    (void)other;
+    return *this;
+}
+Commands::~Commands() {}
+
+// Helper methods implementation
+std::vector<std::string> Commands::parseArguments(const std::string &command)
+{
     std::vector<std::string> args;
+    std::istringstream iss(command);
     std::string token;
     bool trailing = false;
+    iss >> token; // skip command itself
     while (iss >> token)
     {
         if (!trailing && token[0] == ':')
@@ -30,50 +39,69 @@ void HandleCommands(int fd, const std::string& command, PollManager& pollManager
         }
         args.push_back(token);
     }
-    std::cout << "---------- Command: " << cmd << args[0] << std::endl;
+    return args;
+}
+
+std::string Commands::toUpperCase(const std::string &str)
+{
+    std::string result(str);
+    std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+    return result;
+}
+
+void Commands::handleCommand(int fd, const std::string &command, PollManager &pollManager)
+{
+    if (command.empty())
+        return;
+    std::istringstream iss(command);
+    std::string cmd;
+    iss >> cmd;
+    cmd = toUpperCase(cmd);
+    std::vector<std::string> args = parseArguments(command);
+    // std::cout << "---------- Command: " << cmd << args[0] << std::endl;
     if (cmd == "PASS")
-        HandlePASS(fd, args, pollManager);
+        handlePASS(fd, args, pollManager);
     else if (cmd == "NICK")
-        HandleNICK(fd, args, pollManager);
+        handleNICK(fd, args, pollManager);
     else if (cmd == "USER")
-        HandleUSER(fd, args, pollManager);
+        handleUSER(fd, args, pollManager);
     else if (cmd == "JOIN")
-        HandleJOIN(fd, args, pollManager);
+        handleJOIN(fd, args, pollManager);
     else if (cmd == "PRIVMSG")
-        HandleMSG(fd, args, pollManager);
+        handleMSG(fd, args, pollManager);
     else if (cmd == "QUIT")
-        HandleQUIT(fd, pollManager);
+        handleQUIT(fd, pollManager);
     else if (cmd == "KICK")
-        HandleKICK(fd, args, pollManager);
+        handleKICK(fd, args, pollManager);
     else if (cmd == "INVITE")
-        HandleINVITE(fd, args, pollManager);
+        handleINVITE(fd, args, pollManager);
     else if (cmd == "TOPIC")
-        HandleTOPIC(fd, args, pollManager);
+        handleTOPIC(fd, args, pollManager);
     else if (cmd == "MODE")
-        HandleMODE(fd, args, pollManager);
+        handleMODE(fd, args, pollManager);
     else if (cmd == "WHO")
-        HandleWHO(fd, args, pollManager);
+        handleWHO(fd, args, pollManager);
     else if (cmd == "PING")
-        HandlePING(fd, args, pollManager);
+        handlePING(fd, args, pollManager);
     else if (cmd == "PONG")
-        HandlePONG(fd, pollManager);
+        handlePONG(fd, pollManager);
     else if (cmd == "PART")
-        HandlePART(fd, args, pollManager);
+        handlePART(fd, args, pollManager);
     else if (cmd == "NAMES")
-        HandleNAMES(fd, args, pollManager);
+        handleNAMES(fd, args, pollManager);
     else if (cmd == "LIST")
-        HandleLIST(fd, args, pollManager);
+        handleLIST(fd, args, pollManager);
     else if (cmd == "NOTICE")
-        HandleNOTICE(fd, args, pollManager);
+        handleNOTICE(fd, args, pollManager);
     else if (cmd == "WHOIS")
-        HandleWHOIS(fd, args, pollManager);
+        handleWHOIS(fd, args, pollManager);
     else if (cmd == "MOTD")
-        HandleMOTD(fd, pollManager);
+        handleMOTD(fd, pollManager);
     else if (cmd == "ISON")
-        HandleISON(fd, args, pollManager);
+        handleISON(fd, args, pollManager);
     else
     {
-        std::string err = ":irc.local 421 " + cmd + " :Unknown command\r\n";
+        std::string err = ":" + pollManager.getHostname() + " 421 " + cmd + " :Unknown command\r\n";
         send(fd, err.c_str(), err.size(), 0);
     }
 }

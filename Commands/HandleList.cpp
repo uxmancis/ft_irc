@@ -3,17 +3,18 @@
 #include <vector>
 #include <set>
 
-void HandleLIST(int fd, const std::vector<std::string>& args, PollManager& pollManager) 
+void Commands::handleLIST(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
-    Client& client = pollManager.getClient(fd);
+    Client &client = pollManager.getClient(fd);
     std::string nick = client.getNickname();
-    std::map<std::string, Channel>& channels = pollManager.getChannels();
+    std::map<std::string, Channel> &channels = pollManager.getChannels();
+    std::string hostname = pollManager.getHostname();
 
-    std::string header = ":irc.local 321 " + nick + " Channel :Users Name\r\n";
+    std::string header = ":" + hostname + " 321 " + nick + " Channel :Users Name\r\n";
     send(fd, header.c_str(), header.size(), 0);
 
     std::set<std::string> targetChannels;
-    if (!args.empty()) 
+    if (!args.empty())
     {
         std::stringstream ss(args[0]);
         std::string chan;
@@ -22,10 +23,10 @@ void HandleLIST(int fd, const std::vector<std::string>& args, PollManager& pollM
     }
 
     std::map<std::string, Channel>::iterator it;
-    for (it = channels.begin(); it != channels.end(); ++it) 
+    for (it = channels.begin(); it != channels.end(); ++it)
     {
-        const std::string& chanName = it->first;
-        Channel& chan = it->second;
+        const std::string &chanName = it->first;
+        Channel &chan = it->second;
         if (!targetChannels.empty() && targetChannels.find(chanName) == targetChannels.end())
             continue;
 
@@ -42,10 +43,10 @@ void HandleLIST(int fd, const std::vector<std::string>& args, PollManager& pollM
         if (topic.empty())
             topic = "";
 
-        std::string line = ":irc.local 322 " + nick + " " + chanName + " " + userCountStr + " :" + topic + "\r\n";
+        std::string line = ":" + hostname + " 322 " + nick + " " + chanName + " " + userCountStr + " :" + topic + "\r\n";
         send(fd, line.c_str(), line.size(), 0);
     }
 
-    std::string footer = ":irc.local 323 " + nick + " :End of /LIST\r\n";
+    std::string footer = ":" + hostname + " 323 " + nick + " :End of /LIST\r\n";
     send(fd, footer.c_str(), footer.size(), 0);
 }

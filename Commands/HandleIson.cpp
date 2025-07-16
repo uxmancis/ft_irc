@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdlib>
 
-void HandleISON(int fd, const std::vector<std::string>& args, PollManager& pollManager)
+void Commands::handleISON(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {
     if (args.empty())
         return;
@@ -21,7 +21,7 @@ void HandleISON(int fd, const std::vector<std::string>& args, PollManager& pollM
             }
         }
     }
-    Client& client = pollManager.getClient(fd);
-    std::string response = ":irc.local 303 " + client.getNickname() + " :" + result + "\r\n";
+    Client &client = pollManager.getClient(fd);
+    std::string response = ":" + pollManager.getHostname() + " 303 " + client.getNickname() + " :" + result + "\r\n";
     send(fd, response.c_str(), response.size(), 0);
 }
