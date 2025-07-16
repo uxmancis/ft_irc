@@ -10,7 +10,7 @@ void Commands::handleINVITE(int fd, const std::vector<std::string> &args, PollMa
     }
 
     Client &sender = pollManager.getClient(fd);
-    const std::string &channelName = sender.getActualGroup();
+    const std::string &channelName = args[1];
 
     std::map<std::string, Channel> &channels = pollManager.getChannels();
 

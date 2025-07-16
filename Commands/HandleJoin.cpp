@@ -4,11 +4,11 @@ void Commands::handleJOIN(int fd, const std::vector<std::string> &args, PollMana
 {
     if (args.empty())
         return;
-    for (int i = 0; args[0][i] != '\0'; i++) {
-        if (isdigit((unsigned char)args[0][i])) {
-            return;
-        }
-    }
+    // for (int i = 0; args[0][i] != '\0'; i++) {
+    //     if (isdigit((unsigned char)args[0][i])) {
+    //         return;
+    //     }
+    // }
     Client &client = pollManager.getClient(fd);
     std::string channelName = args[0];
 
