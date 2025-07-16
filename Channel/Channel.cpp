@@ -41,10 +41,7 @@ void Channel::addAdmin(Client* client)
     for (size_t i = 0; i < _adminUsers.size(); ++i)
     {
         if (_adminUsers[i] == client)
-        {
-            send(client->getClientFD(), "Ya eres administrador del grupo.\n", 33, 0);
             return;
-        }
     }
     _adminUsers.push_back(client);
 }
@@ -54,10 +51,7 @@ void Channel::addUser(Client* client)
     for (size_t i = 0; i < _regularUsers.size(); ++i)
     {
         if (_regularUsers[i] == client)
-        {
-            send(client->getClientFD(), "Ya pertenece a ese grupo.\n", 27, 0);
             return;
-        }
     }
     _regularUsers.push_back(client);
 }
