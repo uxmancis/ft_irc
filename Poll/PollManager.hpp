@@ -14,7 +14,7 @@
 class Commands;
 
 #define BUFFER_SIZE 512
-#define PING_TIMEOUT 512
+#define PING_TIMEOUT 10
 
 class PollManager
 {
