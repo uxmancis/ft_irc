@@ -1,7 +1,4 @@
 #include "Commands.hpp"
-#include <sstream>
-#include <vector>
-#include <map>
 
 void Commands::handleQUIT(int fd, PollManager &pollManager)
 {

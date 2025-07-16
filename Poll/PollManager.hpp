@@ -1,20 +1,31 @@
 #ifndef POLLMANAGER_HPP
-#define POLLMANAGER_HPP
+# define POLLMANAGER_HPP
 
-#include <vector>
-#include <string>
-#include <map>
-#include <poll.h>
-#include <cstdlib>
-#include "../Client/Client.hpp"
-#include "../Colors.hpp"
-#include "../Channel/Channel.hpp"
+# include <vector>
+# include <string>
+# include <map>
+# include <poll.h>
+# include <cstdlib>
+# include <stdexcept>
+# include <iostream>
+# include <unistd.h>
+# include <fcntl.h>
+# include <cstring>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <sstream>
+# include <csignal>
+# include <cerrno>
 
-// Forward declaration
+# include "../Client/Client.hpp"
+# include "../Colors.hpp"
+# include "../Channel/Channel.hpp"
+# include "../Commands/Commands.hpp"
+
 class Commands;
 
-#define BUFFER_SIZE 512
-#define PING_TIMEOUT 10
+# define BUFFER_SIZE 512
+# define PING_TIMEOUT 10
 
 class PollManager
 {

@@ -2,8 +2,19 @@
 # define SERVER_HPP
 
 # include <string>
+# include <iostream>
+# include <stdexcept>
+# include <fcntl.h>
+# include <unistd.h>
+# include <netinet/in.h>
+# include <sys/socket.h>
+# include <string.h>
+# include <errno.h>
+# include <cstring>
 
-#define MAX_HOSTNAME_LENGTH 256
+# include "../Poll/PollManager.hpp"
+
+# define MAX_HOSTNAME_LENGTH 256
 
 class Server 
 {

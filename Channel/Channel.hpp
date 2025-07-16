@@ -1,10 +1,12 @@
 #ifndef CHANNEL_HPP
-#define CHANNEL_HPP
+# define CHANNEL_HPP
 
 # include "../Client/Client.hpp"
 # include <string>
 # include <vector>
 # include <cstdlib>
+# include <iostream>
+# include <sys/socket.h>
 
 class Client;
 

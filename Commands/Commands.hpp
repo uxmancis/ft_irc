@@ -1,23 +1,28 @@
 #ifndef COMMANDS_HPP
-#define COMMANDS_HPP
+# define COMMANDS_HPP
+
+# include <stdexcept>
+# include <iostream>
+# include <unistd.h>
+# include <fcntl.h>
+# include <cstring>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <string>
+# include <map>
+# include <ctime>
+# include <cstdlib>
+# include <sstream>
+# include <vector>
+# include <ctype.h>
+# include <algorithm>
+# include <signal.h>
+# include <set>
+
+# include "../Client/Client.hpp"
+# include "../Poll/PollManager.hpp"
 
 
-#include "../Client/Client.hpp"
-#include "../Poll/PollManager.hpp"
-#include <stdexcept>
-#include <iostream>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string>
-#include <map>
-#include <vector>
-#include <ctime>
-#include <cstdlib>
-
-// Forward declaration
 class PollManager;
 
 class Commands
@@ -31,6 +36,7 @@ class Commands
         // Main command handler
         static void handleCommand(int fd, const std::string &command, PollManager &pollManager);
 
+        // Output methods
         static void handleMOTD(int fd, PollManager &pollManager);
         static void handlePING(int fd, const std::vector<std::string> &args, PollManager &pollManager);
         static void handleQUIT(int fd, PollManager &pollManager);

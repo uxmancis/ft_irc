@@ -1,6 +1,4 @@
 #include "Commands.hpp"
-#include <sstream>
-#include <vector>
 
 void Commands::handleWHO(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {

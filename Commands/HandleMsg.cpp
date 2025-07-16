@@ -1,7 +1,4 @@
 #include "Commands.hpp"
-#include <sstream>
-#include <vector>
-#include <map>
 
 void Commands::handleMSG(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {

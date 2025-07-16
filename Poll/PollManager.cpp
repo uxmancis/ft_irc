@@ -1,15 +1,4 @@
 #include "PollManager.hpp"
-#include "../Commands/Commands.hpp"
-#include <stdexcept>
-#include <iostream>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sstream>
-#include <csignal>
-#include <cerrno>
 
 PollManager::PollManager(int serverFD, const std::string &password, const std::string &host) : _serverFD(serverFD), _password(password), _hostname(host)
 {
@@ -66,8 +55,7 @@ void PollManager::removeClient(Client *client)
             break;
         }
     }
-    std::cout << YELLOW << "[INFO] Client disconnected: " << fd << std::endl
-              << RESET;
+    std::cout << YELLOW << "[INFO] Client disconnected: " << fd << std::endl << RESET;
     close(fd);
     _clients.erase(fd);
 }
@@ -84,7 +72,7 @@ void PollManager::acceptNewClient()
     }
     if (fcntl(clientFD, F_SETFL, O_NONBLOCK) < 0)
     {
-        std::cerr << RED << "[ERROR] Failed setting client socket to non-blocking" << strerror(errno) << RESET << std::endl;
+        std::cerr << RED << "[ERROR] Failed setting client socket to non-blocking: " << strerror(errno) << RESET << std::endl;
         close(clientFD);
         return;
     }
@@ -113,7 +101,6 @@ void PollManager::run()
                 continue;
             throw std::runtime_error("Poll failed: " + std::string(strerror(errno)));
         }
-
         // std::cout << CYAN "----------- This are current fds: --------------- " RESET << std::endl;
         for (size_t i = 0; i < _fds.size(); ++i)
         {
@@ -160,8 +147,7 @@ void PollManager::run()
                             std::vector<std::string> args;
                             args.push_back("#general");
                             commands.handleJOIN(fd, args, *this);
-                            std::cout << GREEN << "[SERVER] Client connected on FD " << fd << std::endl
-                                      << RESET;
+                            std::cout << GREEN << "[SERVER] Client connected on FD " << fd << std::endl << RESET;
                             client.setJoinedGeneral(true);
                         }
                     }
@@ -173,25 +159,25 @@ void PollManager::run()
             time_t current_time = time(NULL);
             for (it = clients.begin(); it != clients.end(); ++it)
             {
-                if (it->second._previousPING == -1) // Si nunca antes hemos hecho un PING
+                if (it->second.getPreviousPING() == -1) // Si nunca antes hemos hecho un PING
                 {
                     commands.handlePING(it->second.getClientFD(), args2, *this); // Hagamos PING por 1era vez y apuntamos hora it->second._previousPING
                     // std::cout << YELLOW << "1st PING!!! [fd = " << it->second.getClientFD() << "] " RESET << std::endl;
                 }
                 else
                 {
-                    time_t diff = current_time - it->second._previousPING;
+                    time_t diff = current_time - it->second.getPreviousPING();
                     if (diff >= PING_TIMEOUT) // 10 refleja 10 segundos de diferencia que sí permitimos. Si sí han pasado 10 segundos, vuelvo a hacer lo mío...
                     {
                         // std::cout << CYAN "POLICÍA [fd = " << it->second.getClientFD() << "] " RESET << current_time << std::endl;
-                        if (it->second._receivedPONG == false) // #1 si en este tiempo no he recibido PONG, agur --> HandleQUIT
+                        if (it->second.hasReceivedPONG() == false) // #1 si en este tiempo no he recibido PONG, agur --> HandleQUIT
                         {
                             commands.handleQUIT(it->second.getClientFD(), *this);
                             break;
                         }
                         else
                         {
-                            it->second._receivedPONG = false;
+                            it->second.setReceivedPONG(false);
                             commands.handlePING(it->second.getClientFD(), args2, *this);
                         }
                     }

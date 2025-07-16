@@ -1,8 +1,4 @@
-#include <iostream>
-#include <cstdlib>
-#include <signal.h>
 #include "Server/Server.hpp"
-#include "Colors.hpp"
 
 volatile sig_atomic_t g_running = 1;
 

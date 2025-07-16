@@ -1,9 +1,4 @@
 #include "Commands.hpp"
-#include <sstream>
-#include <vector>
-#include <map>
-#include <cstdlib>
-#include <cstdio>
 
 void Commands::handleNICK(int fd, const std::vector<std::string> &args, PollManager &pollManager)
 {

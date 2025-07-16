@@ -1,14 +1,4 @@
 #include "Server.hpp"
-#include "../Poll/PollManager.hpp"
-#include <iostream>
-#include <stdexcept>
-#include <fcntl.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <errno.h>
-#include <cstring>
 
 Server::Server(int port, const std::string &password) : _serverFD(-1), _password(password), _port(port)
 {

@@ -1,7 +1,5 @@
 #include "Commands.hpp"
-#include <sstream>
-#include <vector>
-#include <set>
+
 void Commands::handleMOTD(int fd, PollManager &pollManager)
 {
     Client &client = pollManager.getClient(fd);

@@ -1,6 +1,4 @@
 #include "Channel.hpp"
-#include "iostream"
-#include "sys/socket.h"
 
 Channel::Channel()  : _name(""), _pass(""), _private(false), _freetopic(true), _invite(false), _topic("none"), _limit("") {}
 
